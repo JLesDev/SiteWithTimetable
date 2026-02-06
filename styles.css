@@ -220,3 +220,7 @@ footer {
     .form-row{flex-direction:column}
     .hero h1{font-size:30px}
 }
+
+.about {
+    min-height: 57vh;
+}
