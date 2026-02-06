@@ -3,6 +3,7 @@
 
 <head>
     <meta charset="UTF-8" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <title>Vortex Gutter Cleaning Melbourne</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -18,10 +19,10 @@
         <div class="container">
             <h2>Vortex Gutter Cleaning Melbourne</h2>
             <nav>
-                <a href="index.html" class="active">Home</a>
-                <a href="services.html">Services</a>
-                <a href="about.html">About</a>
-                <a href="contact.html">Contact</a>
+                <a class="butt" href="index.html" class="active">Home</a>
+                <a class="butt" href="services.html">Services</a>
+                <a class="butt" href="about.html">About</a>
+                <a class="butt" href="contact.html">Contact</a>
             </nav>
         </div>
     </header>
@@ -31,7 +32,7 @@
             <div>
             <h1>Vortex Gutter Cleaning Melbourne</h1>
             <p>Fast, affordable, and reliable roof & gutter cleaning services.</p>
-            <p>Certified technicians servicing homes across Melbourne.</p>
+            <p>Certified technicians for Melbourne and beyond.</p>
             <p><strong>Delayed job? It’s free.</strong></p>
             <p><strong>Call 0466 832 387 and mention this site for 10% off</strong></p>
             </div>
@@ -97,7 +98,7 @@
             alert("Quote request sent! We will contact you shortly.");
         }
 
-        document.querySelectorAll("a, button").forEach(el => {
+        document.querySelectorAll("butt, button").forEach(el => {
             el.addEventListener("click", e => {
                 el.classList.remove("wipe");
                 void el.offsetWidth;

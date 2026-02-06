@@ -7,35 +7,31 @@
     --text: #1f2937;
 }
 
-/* Use a modern system font stack; Inter fallback available via Google Fonts in HTML */
 *{box-sizing:border-box;margin:0;padding:0;font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial}
 
 body{background:var(--bg);color:var(--text);line-height:1.6;-webkit-font-smoothing:antialiased}
 
 .container{max-width:1100px;margin:0 auto;padding:0 20px}
 
-/* Header */
 header{background:var(--brand);color:#fff}
 header .container{display:flex;align-items:center;justify-content:space-between;padding:18px 0}
-header h2{font-size:1.1rem;font-weight:700;letter-spacing:0.2px}
+header h2{
+    font-size:1.1rem;z-index:5;font-weight:700;letter-spacing:0.2px}
 nav{display:flex;gap:12px}
 nav a{color:white;padding:8px 14px;border-radius:12px;text-decoration:none;font-weight:600;opacity:0.95;transition:background .18s,transform .15s,opacity .15s}
 nav a:hover{background:rgba(255,255,255,.12);transform:translateY(-3px);opacity:1}
 nav a.active{background:rgba(255,255,255,.18)}
 
-/* subtle ripple for links/buttons */
 a,button{position:relative;overflow:hidden}
 a::after,button::after{content:"";position:absolute;top:0;left:-120%;width:120%;height:100%;background:rgba(255,255,255,0.18);transform:skewX(-20deg);pointer-events:none}
 .wipe::after{animation:wipe .35s cubic-bezier(.4,0,.2,1)}
 @keyframes wipe{from{left:-120%}to{left:120%}}
 
-/* Hero */
 .hero{position:relative;color:white;padding:110px 0;background-image:linear-gradient(rgba(6,12,34,.48), rgba(6,12,34,.48)),url("https://franchiseguidehq.co.uk/wp-content/uploads/2020/10/32dd6118cf9ba3cbfbae0c4dd76d2810_gutters111.jpg");background-size:cover;background-position:center}
-.hero .container{display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:center}
+.hero .container{z-index: 1;display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:center}
 .hero h1{font-size:42px;line-height:1.05;margin-bottom:12px}
 .hero p{font-size:17px;opacity:.95;margin-bottom:8px}
 
-/* Quote box / CTA */
 .quote-box {
     background: rgba(255, 255, 255, .95);
     color: #333;
@@ -71,13 +67,11 @@ a::after,button::after{content:"";position:absolute;top:0;left:-120%;width:120%;
     font-weight: bold;
 }
 
-/* ensure form-control matches quote-box look when used */
 .form-control{width:100%;padding:12px;margin-top:12px;border-radius:6px;border:1px solid #ddd;background:#fff}
 .form-row{display:flex;gap:12px}
 .btn{display:inline-block;background:var(--brand);color:white;padding:11px 16px;border-radius:10px;border:none;cursor:pointer;font-weight:700}
 .btn.secondary{background:#e6eefc;color:var(--brand)}
 
-/* Services */
 .services{padding:20px 80px 60px;text-align:center}
 
 .service {
@@ -92,8 +86,16 @@ a::after,button::after{content:"";position:absolute;top:0;left:-120%;width:120%;
     transition: transform .25s, box-shadow .25s;
 }
 
-/* dark overlay */
 .service::before {
+    content: "";
+    position: absolute;
+    background-size: contain;
+    inset: 0;
+    background: linear-gradient(rgba(0, 0, 0, .55), rgba(0, 0, 0, .55));
+    z-index: 0;
+}
+
+.hero::before {
     content: "";
     position: absolute;
     background-size: contain;
@@ -148,14 +150,64 @@ footer {
     padding: 40px 0;
     text-align: center;
     margin-top: 60px;
-    position: static; /* now part of the normal document flow */
+    position: static;
     width: 100%;
 }
 
 @media (max-width:900px){
-    .hero .container{grid-template-columns:1fr;padding:0}
-    .hero{padding:70px 0}
-    header .container{padding:12px 0}
+    .hero .container{z-index: 1;grid-template-columns:1fr;padding:0}
+    .hero{padding:15px 0}
+    /* header .container{padding:12px 0} */
+    .container {
+        width: 100%;
+    }
+
+    header h2 {
+        margin: 0.5rem;
+        font-size: 1.3rem;
+        position: relative;
+    }
+
+    .hero h1 {
+        margin: 0.5rem;
+        font-size: 1.3rem;
+        position: relative;
+    }
+
+    .butt {
+        margin: 0.2rem;
+        font-size: 0.8rem;
+    }
+
+    p {
+        margin: 0.5rem 0.8rem 0.5rem 0.8rem;
+        text-wrap: wrap;
+    }
+
+    div {
+        width: 100%;
+    }
+    h1 {
+        margin: 0.2rem 1rem 0.5rem 1rem;
+    }
+
+    a[href^="tel:"] {
+      color: #afffff;
+      text-decoration: none;
+    }
+
+     header .container{
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 10px;
+    }
+
+    nav{
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-top: 8px;
+    }
 }
 
 @media (max-width:520px){
