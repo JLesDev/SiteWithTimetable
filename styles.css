@@ -13,12 +13,12 @@ body{background:var(--bg);color:var(--text);line-height:1.6;-webkit-font-smoothi
 
 .container{max-width:1100px;margin:0 auto;padding:0 20px}
 
-header{background:var(--brand);color:#fff}
+header{background:var(--brand);color:#F0EDCC;}
 header .container{display:flex;align-items:center;justify-content:space-between;padding:18px 0}
 header h2{
     font-size:1.1rem;z-index:5;font-weight:700;letter-spacing:0.2px}
 nav{display:flex;gap:12px}
-nav a{color:white;padding:8px 14px;border-radius:12px;text-decoration:none;font-weight:600;opacity:0.95;transition:background .18s,transform .15s,opacity .15s}
+nav a{color:#F0EDCC;padding:8px 14px;border-radius:12px;text-decoration:none;font-weight:600;opacity:0.95;transition:background .18s,transform .15s,opacity .15s}
 nav a:hover{background:rgba(255,255,255,.12);transform:translateY(-3px);opacity:1}
 nav a.active{background:rgba(255,255,255,.18)}
 nav .butt.active{background:rgba(255,255,255,.18)}
@@ -30,13 +30,13 @@ a::after,button::after{content:"";position:absolute;top:0;left:-120%;width:120%;
 .wipe::after{animation:wipe .35s cubic-bezier(.4,0,.2,1)}
 @keyframes wipe{from{left:-120%}to{left:120%}} */
 
-.hero{position:relative;color:white;padding:110px 0;background-image:linear-gradient(rgba(6,12,34,.48), rgba(6,12,34,.48)),url("https://franchiseguidehq.co.uk/wp-content/uploads/2020/10/32dd6118cf9ba3cbfbae0c4dd76d2810_gutters111.jpg");background-size:cover;background-position:center}
+.hero{position:relative;color:#F0EDCC;padding:110px 0;background-color:#02343F;background-size:cover;background-position:center}
 .hero .container{z-index: 1;display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:center}
 .hero h1{font-size:42px;line-height:1.05;margin-bottom:12px;position: relative}
 .hero p{font-size:17px;opacity:.95;margin-bottom:8px}
 
 .quote-box {
-    background: rgba(255, 255, 255, .95);
+    background: #F0EDCC;
     color: #333;
     padding: 35px;
     border-radius: 14px;
@@ -50,6 +50,8 @@ a::after,button::after{content:"";position:absolute;top:0;left:-120%;width:120%;
 
 .quote-box input,
 .quote-box button {
+    background: #02343F;
+    color: #F0EDCC;
     width: 100%;
     padding: 12px;
     margin-top: 12px;
@@ -75,7 +77,7 @@ a::after,button::after{content:"";position:absolute;top:0;left:-120%;width:120%;
 .btn{display:inline-block;background:var(--brand);color:white;padding:11px 16px;border-radius:10px;border:none;cursor:pointer;font-weight:700}
 .btn.secondary{background:#e6eefc;color:var(--brand)}
 
-.services{padding:20px 80px 60px;text-align:center}
+.services{padding:20px 80px 60px;text-align:center;background-color:#F0EDCC;}
 
 .service {
     position: relative;
@@ -98,14 +100,14 @@ a::after,button::after{content:"";position:absolute;top:0;left:-120%;width:120%;
     z-index: 0;
 }
 
-.hero::before {
+/* .hero::before {
     content: "";
     position: absolute;
     background-size: contain;
     inset: 0;
     background: linear-gradient(rgba(0, 0, 0, .55), rgba(0, 0, 0, .55));
     z-index: 0;
-}
+} */
 
 .service * {
     position: relative;
@@ -152,9 +154,18 @@ footer {
     color: white;
     padding: 40px 0;
     text-align: center;
-    margin-top: 60px;
+    /* margin-top: 60px; */
     position: static;
     width: 100%;
+}
+
+header {
+    width: 100%;
+    /* display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 0; */
+    background-color: #02343F;
 }
 
 @media (max-width:900px){
