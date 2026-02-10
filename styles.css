@@ -91,14 +91,14 @@ a::after,button::after{content:"";position:absolute;top:0;left:-120%;width:120%;
     transition: transform .25s, box-shadow .25s;
 }
 
-.service::before {
+/* .service::before {
     content: "";
     position: absolute;
     background-size: contain;
     inset: 0;
     background: linear-gradient(rgba(0, 0, 0, .55), rgba(0, 0, 0, .55));
     z-index: 0;
-}
+} */
 
 /* .hero::before {
     content: "";
