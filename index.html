@@ -3,7 +3,8 @@
 
 <head>
     <meta charset="UTF-8" />
-    <meta name="description" content="Affordable gutter cleaning, downpipe and roof cleaning in Melbourne. Certified technicians, free quotes & fast service. Call 0466 832 387 today!">
+    <meta name="description"
+        content="Affordable gutter cleaning, downpipe and roof cleaning in Melbourne. Certified technicians, free quotes & fast service. Call 0466 832 387 today!">
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <title>Jonty Leslie - Programming Professional</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -16,7 +17,8 @@
     <link rel="canonical" href="https://jlesdev.github.io/VortexGutters/">
     <meta property="og:title" content="Vortex Gutter Cleaning Melbourne">
     <meta property="og:description" content="Reliable gutter and roof cleaning services in Melbourne">
-    <meta property="og:image" content="https://revivegroup.au/wp-content/uploads/2025/07/Revive-Group-Gutter-Cleaning-2.jpg">
+    <meta property="og:image"
+        content="https://revivegroup.au/wp-content/uploads/2025/07/Revive-Group-Gutter-Cleaning-2.jpg">
     <meta property="og:url" content="https://jlesdev.github.io/VortexGutters/">
     <meta name="twitter:card" content="summary_large_image">
 </head>
@@ -38,56 +40,60 @@
     <section class="hero">
         <div class="container">
             <div>
-            <h1>Jonty Leslie</h1>
-            <p>Professional Rust Developer.</p>
-            <p>Amateur journalist.</p>
-            <p><strong>Need a hand with your Rust? Contact me.</strong></p>
-            <p><strong>This site was developed on Wurundjeri land.</strong></p>
+                <h1>Jonty Leslie</h1>
+                <p>Professional Rust Developer.</p>
+                <p>Amateur journalist.</p>
+                <p><strong>Need a hand with your Rust? Contact me.</strong></p>
+                <p><strong>This site was developed on Wurundjeri land.</strong></p>
             </div>
-            
+
             <div class="quote-box">
-            <span class="highlight-container"><h3><span class="highlight">Send me a message</span></h3></span>
+                <span class="highlight-container">
+                    <h3><span class="highlight">Send me a message</span></h3>
+                </span>
 
-            <form action="https://formsubmit.co/jontyleslie@gmail.com" method="POST">
-                <input type="text" name="name" placeholder="Name*" required>
-                <input type="email" name="email" placeholder="Email*" required>
-                <input type="text" name="phone" placeholder="Message" required>
+                <form action="https://formsubmit.co/jontyleslie@gmail.com" method="POST">
+                    <input type="text" name="name" placeholder="Name*" required>
+                    <input type="email" name="email" placeholder="Email*" required>
+                    <input type="text" name="phone" placeholder="Message" required>
 
-                <input type="hidden" name="_subject" value="New Quote Request">
-                <input type="hidden" name="_captcha" value="false">
+                    <input type="hidden" name="_subject" value="New Quote Request">
+                    <input type="hidden" name="_captcha" value="false">
 
-                <button type="submit">Send into the abyss</button>
-            </form>
+                    <button type="submit">Send into the abyss</button>
+                </form>
             </div>
         </div>
 
     </section>
+
+    <section class="tracker">
+        <h2>City Loop Live Tracker</h2>
+        <div id="train-board">Loading trains…</div>
+    </section>
+
 
     <section class="services">
         <h2>My Projects</h2>
 
         <div class="service-grid">
 
-            <div class="service"
-                style="background-size: cover; background-color:#02343F;color:#F0EDCC;">
+            <div class="service" style="background-size: cover; background-color:#02343F;color:#F0EDCC;">
                 <h3>Jeather 2</h3>
                 <p>The world's first social media for weather.</p>
             </div>
 
-            <div class="service"
-                style="background-size: cover; background-color:#02343F;color:#F0EDCC;">
+            <div class="service" style="background-size: cover; background-color:#02343F;color:#F0EDCC;">
                 <h3>Card Tennis</h3>
                 <p>Cards have been the same for 300 years... until now.</p>
             </div>
 
-            <div class="service"
-                style="background-size: cover; background-color:#02343F;color:#F0EDCC;">
+            <div class="service" style="background-size: cover; background-color:#02343F;color:#F0EDCC;">
                 <h3>Not Wordle</h3>
                 <p>It's a rust based wordle... with a twist.</p>
             </div>
 
-            <div class="service"
-                style="background-size: cover;background-color:#02343F;color:#F0EDCC;">
+            <div class="service" style="background-size: cover;background-color:#02343F;color:#F0EDCC;">
                 <h3>Open Source Contributions</h3>
                 <p>Mikoto, tiberius, and more.</p>
             </div>
@@ -119,6 +125,91 @@
           "description": "Professional gutter, downpipe and roof cleaning services in Melbourne and surrounding suburbs."
         }
     </script>
+
+    <script>
+        const STOPS = {
+            // flinders: 22238,
+            // parliament: 10924,
+            // melbourneCentral: 12197,
+            // flagstaff: 10920
+            flinders: 1074,
+            parliament: 1068,
+            melbourneCentral: 1071,
+            flagstaff: 1072,
+            southernCross: 1062
+        };
+
+        async function loadTrains() {
+            const board = document.getElementById("train-board");
+            board.innerHTML = "Loading trains…";
+
+            try {
+                const results = [];
+
+                for (let key in STOPS) {
+                    const stopId = STOPS[key];
+
+                    // CALL YOUR PROXY, NOT PTV
+                    const res = await fetch(`https://ptv.jontyleslie.workers.dev/?stop=${stopId}`);
+                    const data = await res.json();
+
+                    if (!data.departures) continue;
+
+                    data.departures.slice(0, 3).forEach(dep => {
+                        const time =
+                            dep.estimated_departure_utc ||
+                            dep.scheduled_departure_utc;
+
+                        if (!time) return;
+
+                        const diff =
+                            new Date(time).getTime() - Date.now();
+
+                        const mins = Math.ceil(diff / 60000);
+
+                        if (!Number.isFinite(mins) || mins < 0) return;
+
+                        results.push({
+                            station: key.replace(/([A-Z])/g, " $1"),
+                            line: data.routes?.[dep.route_id]?.route_name || "Train",
+                            destination: data.directions?.[dep.direction_id]?.direction_name || "",
+                            mins
+                        });
+
+
+                    });
+                }
+
+                board.innerHTML = "";
+
+                results
+                    .sort((a, b) => a.mins - b.mins)
+                    .slice(0, 8)
+                    .forEach(t => {
+                        const row = document.createElement("div");
+                        row.className = "train-row";
+                        row.innerHTML = `
+  <span class="train-station">${t.station}</span>
+  <span class="train-line">${t.line}</span>
+  <span>${t.destination}</span>
+  <span>${t.mins} min</span>
+`;
+                        board.appendChild(row);
+                    });
+
+            } catch (err) {
+                board.innerHTML = "Tracker offline.";
+                console.error(err);
+            }
+        }
+
+        loadTrains();
+        setInterval(loadTrains, 30000);
+    </script>
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+
 
 
 </body>

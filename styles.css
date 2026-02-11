@@ -320,3 +320,37 @@ input::placeholder {
     transform: rotate(2deg) scaleX(1);
   }
 }
+
+.tracker {
+  padding: 60px 20px;
+  background: #0b1c26;
+  color: white;
+  text-align: center;
+}
+
+#train-board {
+  max-width: 700px;
+  margin: 30px auto;
+  display: grid;
+  gap: 12px;
+}
+
+.train-row {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 2fr .6fr;
+  gap: 12px;
+  padding: 14px 18px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 12px;
+  margin-bottom: 10px;
+  align-items: center;
+}
+
+.train-station {
+  font-weight: 700;
+  color: #7dd3fc;
+}
+
+.train-line {
+  font-weight: 600;
+}
