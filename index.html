@@ -127,17 +127,27 @@
     </script>
 
     <script>
+        // const STOPS = {
+        //     // flinders: 22238,
+        //     // parliament: 10924,
+        //     // melbourneCentral: 12197,
+        //     // flagstaff: 10920
+        //     flinders: 1074,
+        //     parliament: 1068,
+        //     melbourneCentral: 1071,
+        //     flagstaff: 1072,
+        //     southernCross: 1062
+        // };
+
         const STOPS = {
-            // flinders: 22238,
-            // parliament: 10924,
-            // melbourneCentral: 12197,
-            // flagstaff: 10920
-            flinders: 1074,
-            parliament: 1068,
-            melbourneCentral: 1071,
-            flagstaff: 1072,
-            southernCross: 1062
+            flinders: 22238,
+            parliament: 10924,
+            melbourneCentral: 12197,
+            flagstaff: 10920,
+            southernCross: 1181
         };
+
+
 
         async function loadTrains() {
             const board = document.getElementById("train-board");
@@ -169,10 +179,22 @@
 
                         if (!Number.isFinite(mins) || mins < 0) return;
 
+                        const run =
+                            data.runs?.[dep.run_id]?.run_name || "";
+
+                        const direction =
+                            data.directions?.[dep.direction_id]?.direction_name || "";
+
+                        const route =
+                            data.routes?.[dep.route_id]?.route_name || "";
+
+                        const label = run || direction || route || "Train";
+
+
                         results.push({
                             station: key.replace(/([A-Z])/g, " $1"),
-                            line: data.routes?.[dep.route_id]?.route_name || "Train",
-                            destination: data.directions?.[dep.direction_id]?.direction_name || "",
+                            line: label,
+                            destination: direction,
                             mins
                         });
 
@@ -191,9 +213,9 @@
                         row.innerHTML = `
   <span class="train-station">${t.station}</span>
   <span class="train-line">${t.line}</span>
-  <span>${t.destination}</span>
   <span>${t.mins} min</span>
 `;
+
                         board.appendChild(row);
                     });
 
