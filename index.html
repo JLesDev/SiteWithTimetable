@@ -143,7 +143,7 @@
 
     let searchQuery = "";
     let allStations = {};
-    let allStationDepartures = {}; // Store departures for all stations
+    let allStationDepartures = {};
 
     const STOPS = {
         flinders: 1071,
@@ -366,13 +366,12 @@
     async function renderAllStationsGrid(board) {
         board.innerHTML = "<div style='padding: 20px; text-align: center;'>Loading all stations... This may take a moment.</div>";
         
-        // Get list of major stations (you can customize this list)
         const majorStations = Object.entries(allStations)
             .filter(([id, name]) => {
-                // Filter to show only major stations - customize this logic
-                return true; // For now, show all
+
+                return true; 
             })
-            .slice(0, 50); // Limit to first 50 stations for performance
+            .slice(0, 20);
 
         board.innerHTML = "";
         board.classList.add("all-stations-grid");
