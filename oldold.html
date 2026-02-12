@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Melbourne Train Network - Interactive Map</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f5f5f5;
+            overflow: hidden;
+        }
+
+        .header {
+            background: #02343F;
+            color: #F0EDCC;
+            padding: 15px 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .controls {
+            background: white;
+            padding: 15px 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+            border-bottom: 2px solid #02343F;
+        }
+
+        .controls button {
+            padding: 8px 16px;
+            background: #02343F;
+            color: #F0EDCC;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .controls button:hover {
+            background: #044555;
+            transform: translateY(-1px);
+        }
+
+        .controls input {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            flex: 1;
+            min-width: 250px;
+            font-size: 0.9rem;
+        }
+
+        .controls input:focus {
+            outline: none;
+            border-color: #02343F;
+        }
+
+        .main-container {
+            display: flex;
+            height: calc(100vh - 140px);
+        }
+
+        .map-container {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            background: white;
+            cursor: grab;
+        }
+
+        .map-container.dragging {
+            cursor: grabbing;
+        }
+
+        #train-map {
+            width: 100%;
+            height: 100%;
+            transform-origin: 0 0;
+        }
+
+        .info-panel {
+            width: 350px;
+            background: white;
+            border-left: 2px solid #02343F;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .info-panel h2 {
+            color: #02343F;
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+        }
+
+        .station-name {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #02343F;
+            margin-bottom: 10px;
+        }
+
+        .departures-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .departure-item {
+            background: #f9f9f9;
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 4px solid #02343F;
+        }
+
+        .departure-line {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .departure-details {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .departure-time {
+            font-weight: bold;
+            color: #02343F;
+        }
+
+        .zoom-controls {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 100;
+        }
+
+        .zoom-controls button {
+            width: 40px;
+            height: 40px;
+            background: white;
+            border: 2px solid #02343F;
+            border-radius: 5px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .zoom-controls button:hover {
+            background: #02343F;
+            color: #F0EDCC;
+        }
+
+        /* SVG Styles */
+        .train-line {
+            fill: none;
+            stroke-width: 5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .station-dot {
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .station-dot:hover {
+            r: 7;
+        }
+
+        .station-dot.selected {
+            r: 8;
+            stroke-width: 3;
+        }
+
+        .station-dot.major {
+            r: 6;
+        }
+
+        .station-label {
+            font-size: 9px;
+            fill: #222;
+            pointer-events: none;
+            user-select: none;
+            font-weight: 500;
+        }
+
+        .station-label.major {
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .station-group {
+            cursor: pointer;
+        }
+
+        .city-loop {
+            fill: none;
+            stroke: #999;
+            stroke-width: 4;
+            stroke-dasharray: 6, 6;
+        }
+
+        @media (max-width: 768px) {
+            .info-panel {
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                width: 100%;
+                height: 40%;
+                border-left: none;
+                border-top: 2px solid #02343F;
+                z-index: 50;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h1>Melbourne Train Network - All Stations</h1>
+        <p>Click any station to see live departure times</p>
+    </div>
+
+    <div class="controls">
+        <button id="reset-view">Reset View</button>
+        <button id="fit-all">Fit All</button>
+        <input type="text" id="station-search"
+            placeholder="Search for any station (e.g. Richmond, Footscray, Ringwood)...">
+    </div>
+
+    <div class="main-container">
+        <div class="map-container" id="map-container">
+            <div class="zoom-controls">
+                <button id="zoom-in" title="Zoom In">+</button>
+                <button id="zoom-out" title="Zoom Out">−</button>
+            </div>
+
+            <!-- Map will be inserted here by JavaScript -->
+            <svg id="train-map" xmlns="http://www.w3.org/2000/svg"></svg>
+        </div>
+
+        <div class="info-panel">
+            <h2>Station Information</h2>
+            <div id="station-info">
+                <p style="color: #666; font-style: italic;">Click any station on the map to see live departure times.
+                    Use search to find specific stations quickly.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // API Configuration
+        const API_URL = 'https://ptv.jontyleslie.workers.dev';
+
+        const LINES = {
+            1: 'Alamein', 2: 'Belgrave', 3: 'Craigieburn', 4: 'Cranbourne',
+            5: 'Flemington Racecourse', 6: 'Frankston', 7: 'Glen Waverley',
+            8: 'Hurstbridge', 9: 'Lilydale', 10: 'Mernda', 11: 'Pakenham',
+            12: 'Sandringham', 13: 'Stony Point', 14: 'Sunbury', 15: 'Upfield',
+            16: 'Werribee', 17: 'Williamstown'
+        };
+
+        const LINE_COLOURS = {
+            'Alamein': "#A6E3FF", 'Belgrave': "#A6E3FF", 'Craigieburn': "#F5EC5D",
+            'Cranbourne': "#73EBE3", 'Flemington Racecourse': "#F5EC5D",
+            'Frankston': "#6BE35F", 'Glen Waverley': "#A6E3FF",
+            'Hurstbridge': "#EB8373", 'Lilydale': "#A6E3FF", 'Mernda': "#EB8373",
+            'Pakenham': "#73EBE3", 'Sandringham': "#F55DEB", 'Stony Point': "#6BE35F",
+            'Sunbury': "#F5EC5D", 'Upfield': "#F5EC5D", 'Werribee': "#F55DEB",
+            'Williamstown': "#F55DEB"
+        };
+
+        // All stations with their actual coordinates from the PTV map
+        // Format: stopId: {x, y, name, major (bool)}
+        const STATIONS = {};
+        let allStationsData = null;
+
+        // Map state
+        let scale = 1;
+        let translateX = 0;
+        let translateY = 0;
+        let isDragging = false;
+        let startX, startY;
+        let selectedStation = null;
+
+        // Elements
+        const mapSvg = document.getElementById('train-map');
+        const mapContainer = document.getElementById('map-container');
+        const stationInfo = document.getElementById('station-info');
+        const stationSearch = document.getElementById('station-search');
+
+        // Load all station data first
+        async function loadStations() {
+            try {
+                const response = await fetch(`${API_URL}/stations`);
+                const data = await response.json();
+                allStationsData = data.stations;
+
+                console.log(`Loaded ${allStationsData.length} stations`);
+
+                // Build the map
+                buildMap();
+
+            } catch (error) {
+                console.error('Error loading stations:', error);
+                stationInfo.innerHTML = '<p style="color: #e74c3c;">Error loading station data</p>';
+            }
+        }
+
+        function buildMap() {
+            if (!allStationsData) return;
+
+            // SVG viewBox size
+            const width = 2400;
+            const height = 1800;
+
+            mapSvg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+
+            // Clear existing content
+            mapSvg.innerHTML = '';
+
+            // Background
+            const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            bg.setAttribute('width', width);
+            bg.setAttribute('height', height);
+            bg.setAttribute('fill', '#fafafa');
+            mapSvg.appendChild(bg);
+
+            // Define line routes (simplified schematic positions)
+            const lineRoutes = {
+                // --- NORTHERN GROUP (Yellow) ---
+                'craigieburn': {
+                    color: '#F5EC5D',
+                    stations: [
+                        { name: 'Southern Cross', x: 900, y: 600, major: true },
+                        { name: 'North Melbourne', x: 900, y: 350, major: true },
+                        { name: 'Kensington', x: 800, y: 300 }, { name: 'Newmarket', x: 750, y: 250 },
+                        { name: 'Ascot Vale', x: 700, y: 200 }, { name: 'Moonee Ponds', x: 650, y: 150 },
+                        { name: 'Essendon', x: 600, y: 100, major: true }, { name: 'Glenbervie', x: 550, y: 50 },
+                        { name: 'Strathmore', x: 500, y: 50 }, { name: 'Pascoe Vale', x: 450, y: 50 },
+                        { name: 'Oak Park', x: 400, y: 50 }, { name: 'Glenroy', x: 350, y: 50, major: true },
+                        { name: 'Jacana', x: 300, y: 50 }, { name: 'Broadmeadows', x: 250, y: 50, major: true },
+                        { name: 'Coolaroo', x: 200, y: 50 }, { name: 'Roxburgh Park', x: 150, y: 50 },
+                        { name: 'Craigieburn', x: 100, y: 50, major: true }
+                    ]
+                },
+                'upfield': {
+                    color: '#F5EC5D',
+                    stations: [
+                        { name: 'North Melbourne', x: 900, y: 350 },
+                        { name: 'Macaulay', x: 850, y: 300 }, { name: 'Flemington Bridge', x: 850, y: 250 },
+                        { name: 'Royal Park', x: 850, y: 200 }, { name: 'Jewell', x: 850, y: 150 },
+                        { name: 'Brunswick', x: 850, y: 100 }, { name: 'Anstey', x: 850, y: 50 },
+                        { name: 'Moreland', x: 850, y: 0 }, { name: 'Coburg', x: 850, y: -50, major: true },
+                        { name: 'Batman', x: 850, y: -100 }, { name: 'Merlynston', x: 850, y: -150 },
+                        { name: 'Fawkner', x: 850, y: -200 }, { name: 'Gowrie', x: 850, y: -250 },
+                        { name: 'Upfield', x: 850, y: -300, major: true }
+                    ]
+                },
+                'sunbury': {
+                    color: '#F5EC5D',
+                    stations: [
+                        { name: 'North Melbourne', x: 900, y: 350 },
+                        { name: 'Footscray', x: 700, y: 350, major: true },
+                        { name: 'Middle Footscray', x: 650, y: 350 }, { name: 'West Footscray', x: 600, y: 350 },
+                        { name: 'Tottenham', x: 550, y: 350 }, { name: 'Sunshine', x: 450, y: 350, major: true },
+                        { name: 'Albion', x: 400, y: 300 }, { name: 'Ginifer', x: 350, y: 250 },
+                        { name: 'St Albans', x: 300, y: 200, major: true }, { name: 'Keilor Plains', x: 250, y: 150 },
+                        { name: 'Watergardens', x: 200, y: 100, major: true }, { name: 'Diggers Rest', x: 150, y: 50 },
+                        { name: 'Sunbury', x: 100, y: 0, major: true }
+                    ]
+                },
+
+                // --- NORTH-EASTERN GROUP (Red/Orange) ---
+                'mernda': {
+                    color: '#EB8373',
+                    stations: [
+                        { name: 'Jolimont', x: 1250, y: 650 }, { name: 'West Richmond', x: 1350, y: 600 },
+                        { name: 'North Richmond', x: 1350, y: 550 }, { name: 'Collingwood', x: 1350, y: 500 },
+                        { name: 'Victoria Park', x: 1350, y: 450 }, { name: 'Clifton Hill', x: 1350, y: 400, major: true },
+                        { name: 'Rushall', x: 1400, y: 350 }, { name: 'Merri', x: 1450, y: 300 },
+                        { name: 'Northcote', x: 1500, y: 250 }, { name: 'Croxton', x: 1550, y: 200 },
+                        { name: 'Thornbury', x: 1600, y: 150 }, { name: 'Bell', x: 1650, y: 100 },
+                        { name: 'Preston', x: 1700, y: 50, major: true }, { name: 'Regent', x: 1750, y: 0 },
+                        { name: 'Reservoir', x: 1800, y: -50, major: true }, { name: 'Keon Park', x: 1850, y: -100 },
+                        { name: 'Thomastown', x: 1900, y: -150 }, { name: 'Lalor', x: 1950, y: -200 },
+                        { name: 'Epping', x: 2000, y: -250, major: true }, { name: 'South Morang', x: 2100, y: -250 },
+                        { name: 'Middle Gorge', x: 2200, y: -250 }, { name: 'Hawkstowe', x: 2300, y: -250 },
+                        { name: 'Mernda', x: 2400, y: -250, major: true }
+                    ]
+                },
+                'hurstbridge': {
+                    color: '#EB8373',
+                    stations: [
+                        { name: 'Clifton Hill', x: 1350, y: 400 },
+                        { name: 'Westgarth', x: 1450, y: 400 }, { name: 'Dennis', x: 1500, y: 400 },
+                        { name: 'Fairfield', x: 1550, y: 400 }, { name: 'Alphington', x: 1600, y: 400 },
+                        { name: 'Darebin', x: 1650, y: 400 }, { name: 'Ivanhoe', x: 1700, y: 400, major: true },
+                        { name: 'Eaglemont', x: 1750, y: 350 }, { name: 'Heidelberg', x: 1800, y: 300, major: true },
+                        { name: 'Rosanna', x: 1850, y: 250 }, { name: 'Macleod', x: 1900, y: 200 },
+                        { name: 'Watsonia', x: 1950, y: 150 }, { name: 'Greensborough', x: 2050, y: 150, major: true },
+                        { name: 'Montmorency', x: 2150, y: 150 }, { name: 'Eltham', x: 2250, y: 150, major: true },
+                        { name: 'Diamond Creek', x: 2350, y: 150 }, { name: 'Wattle Glen', x: 2450, y: 150 },
+                        { name: 'Hurstbridge', x: 2550, y: 150, major: true }
+                    ]
+                },
+
+                // --- EASTERN GROUP (Light Blue) ---
+                'lilydale-belgrave': {
+                    color: '#A6E3FF',
+                    stations: [
+                        { name: 'Richmond', x: 1200, y: 750, major: true },
+                        { name: 'East Richmond', x: 1250, y: 800 }, { name: 'Burnley', x: 1300, y: 850, major: true },
+                        { name: 'Hawthorn', x: 1400, y: 850 }, { name: 'Glenferrie', x: 1500, y: 850 },
+                        { name: 'Auburn', x: 1600, y: 850 }, { name: 'Camberwell', x: 1700, y: 850, major: true },
+                        { name: 'East Camberwell', x: 1800, y: 800 }, { name: 'Canterbury', x: 1900, y: 750 },
+                        { name: 'Chatham', x: 2000, y: 700 }, { name: 'Union', x: 2100, y: 650, major: true },
+                        { name: 'Box Hill', x: 2200, y: 600, major: true }, { name: 'Laburnum', x: 2300, y: 550 },
+                        { name: 'Blackburn', x: 2400, y: 500, major: true }, { name: 'Nunawading', x: 2500, y: 450 },
+                        { name: 'Mitcham', x: 2600, y: 400, major: true }, { name: 'Heatherdale', x: 2700, y: 350 },
+                        { name: 'Ringwood', x: 2800, y: 300, major: true },
+                        // Lilydale Split
+                        { name: 'Ringwood East', x: 2900, y: 250 }, { name: 'Croydon', x: 3000, y: 250 },
+                        { name: 'Mooroolbark', x: 3100, y: 250 }, { name: 'Lilydale', x: 3200, y: 250, major: true },
+                        // Belgrave Split (from Ringwood)
+                        { name: 'Heathmont', x: 2900, y: 350 }, { name: 'Bayswater', x: 3000, y: 400 },
+                        { name: 'Boronia', x: 3100, y: 450 }, { name: 'Ferntree Gully', x: 3200, y: 500 },
+                        { name: 'Upper Ferntree Gully', x: 3300, y: 550 }, { name: 'Upwey', x: 3400, y: 600 },
+                        { name: 'Tecoma', x: 3500, y: 650 }, { name: 'Belgrave', x: 3600, y: 700, major: true }
+                    ]
+                },
+                'glen-waverley': {
+                    color: '#A6E3FF',
+                    stations: [
+                        { name: 'Burnley', x: 1300, y: 850 },
+                        { name: 'Heyington', x: 1400, y: 950 }, { name: 'Kooyong', x: 1500, y: 1050 },
+                        { name: 'Tooronga', x: 1600, y: 1150 }, { name: 'Gardiner', x: 1700, y: 1250 },
+                        { name: 'Glen Iris', x: 1800, y: 1350 }, { name: 'Darling', x: 1900, y: 1450 },
+                        { name: 'East Malvern', x: 2000, y: 1550 }, { name: 'Holmesglen', x: 2100, y: 1650 },
+                        { name: 'Jordanville', x: 2200, y: 1750 }, { name: 'Mount Waverley', x: 2300, y: 1750, major: true },
+                        { name: 'Syndal', x: 2400, y: 1750 }, { name: 'Glen Waverley', x: 2500, y: 1750, major: true }
+                    ]
+                },
+
+                // --- SOUTH-EASTERN GROUP (Teal/Green) ---
+                'pakenham-cranbourne': {
+                    color: '#73EBE3',
+                    stations: [
+                        { name: 'South Yarra', x: 1200, y: 950, major: true },
+                        { name: 'Hawksburn', x: 1300, y: 1000 }, { name: 'Toorak', x: 1400, y: 1050 },
+                        { name: 'Armadale', x: 1500, y: 1100 }, { name: 'Malvern', x: 1600, y: 1150 },
+                        { name: 'Caulfield', x: 1700, y: 1250, major: true }, { name: 'Carnegie', x: 1800, y: 1300 },
+                        { name: 'Murrumbeena', x: 1900, y: 1350 }, { name: 'Hughesdale', x: 2000, y: 1400 },
+                        { name: 'Oakleigh', x: 2100, y: 1450, major: true }, { name: 'Huntingdale', x: 2200, y: 1500 },
+                        { name: 'Clayton', x: 2300, y: 1550, major: true }, { name: 'Westall', x: 2400, y: 1600 },
+                        { name: 'Springvale', x: 2500, y: 1650 }, { name: 'Sandown Park', x: 2600, y: 1700 },
+                        { name: 'Noble Park', x: 2700, y: 1750, major: true }, { name: 'Yarraman', x: 2800, y: 1800 },
+                        { name: 'Dandenong', x: 2900, y: 1850, major: true },
+                        // Pakenham Branch
+                        { name: 'Hallam', x: 3000, y: 1850 }, { name: 'Narre Warren', x: 3100, y: 1850 },
+                        { name: 'Berwick', x: 3200, y: 1850 }, { name: 'Beaconsfield', x: 3300, y: 1850 },
+                        { name: 'Officer', x: 3400, y: 1850 }, { name: 'Cardinia Road', x: 3500, y: 1850 },
+                        { name: 'Pakenham', x: 3600, y: 1850, major: true }, { name: 'East Pakenham', x: 3700, y: 1850, major: true },
+                        // Cranbourne Branch
+                        { name: 'Lynbrook', x: 3000, y: 1950 }, { name: 'Merinda Park', x: 3100, y: 2050 },
+                        { name: 'Cranbourne', x: 3200, y: 2150, major: true }
+                    ]
+                },
+                'frankston': {
+                    color: '#6BE35F',
+                    stations: [
+                        { name: 'Caulfield', x: 1700, y: 1250 },
+                        { name: 'Glen Huntly', x: 1750, y: 1350 }, { name: 'Ormond', x: 1800, y: 1450 },
+                        { name: 'McKinnon', x: 1850, y: 1550 }, { name: 'Bentleigh', x: 1900, y: 1650, major: true },
+                        { name: 'Patterson', x: 1950, y: 1750 }, { name: 'Moorabbin', x: 2000, y: 1850, major: true },
+                        { name: 'Highett', x: 2050, y: 1950 }, { name: 'Southland', x: 2100, y: 2050, major: true },
+                        { name: 'Cheltenham', x: 2150, y: 2150, major: true }, { name: 'Mentone', x: 2200, y: 2250 },
+                        { name: 'Parkdale', x: 2250, y: 2350 }, { name: 'Mordialloc', x: 2300, y: 2450, major: true },
+                        { name: 'Aspendale', x: 2400, y: 2550 }, { name: 'Edithvale', x: 2500, y: 2650 },
+                        { name: 'Chelsea', x: 2600, y: 2750 }, { name: 'Bonbeach', x: 2700, y: 2850 },
+                        { name: 'Carrum', x: 2800, y: 2950 }, { name: 'Seaford', x: 2900, y: 3050 },
+                        { name: 'Kananook', x: 3000, y: 3150 }, { name: 'Frankston', x: 3100, y: 3250, major: true }
+                    ]
+                },
+
+                // --- BAYSIDE & WESTERN (Pink/Magenta) ---
+                'sandringham': {
+                    color: '#F55DEB',
+                    stations: [
+                        { name: 'South Yarra', x: 1200, y: 950 },
+                        { name: 'Prahran', x: 1100, y: 1050 }, { name: 'Windsor', x: 1000, y: 1150 },
+                        { name: 'Balaclava', x: 900, y: 1250 }, { name: 'Ripponlea', x: 800, y: 1350 },
+                        { name: 'Elsternwick', x: 700, y: 1450, major: true }, { name: 'Gardenvale', x: 600, y: 1550 },
+                        { name: 'North Brighton', x: 500, y: 1650 }, { name: 'Middle Brighton', x: 400, y: 1750 },
+                        { name: 'Brighton Beach', x: 300, y: 1850, major: true }, { name: 'Hampton', x: 200, y: 1950 },
+                        { name: 'Sandringham', x: 100, y: 2050, major: true }
+                    ]
+                },
+                'werribee-williamstown': {
+                    color: '#F55DEB',
+                    stations: [
+                        { name: 'Footscray', x: 700, y: 350 },
+                        { name: 'Seddon', x: 600, y: 400 }, { name: 'Yarraville', x: 500, y: 450 },
+                        { name: 'Spotswood', x: 400, y: 500 }, { name: 'Newport', x: 300, y: 550, major: true },
+                        // Williamstown Branch
+                        { name: 'North Williamstown', x: 300, y: 650 }, { name: 'Williamstown Beach', x: 300, y: 750 },
+                        { name: 'Williamstown', x: 300, y: 850, major: true },
+                        // Werribee Branch
+                        { name: 'Seaholme', x: 200, y: 600 }, { name: 'Altona', x: 100, y: 650 },
+                        { name: 'Westona', x: 0, y: 700 }, { name: 'Laverton', x: -100, y: 750, major: true },
+                        { name: 'Aircraft', x: -200, y: 800 }, { name: 'Williams Landing', x: -300, y: 850 },
+                        { name: 'Hoppers Crossing', x: -400, y: 900 }, { name: 'Werribee', x: -500, y: 950, major: true }
+                    ]
+                }
+            };
+            // const lineRoutes = {
+            //     // Cranbourne/Pakenham - Teal/Cyan
+            //     'cranbourne-pakenham': {
+            //         color: '#73EBE3',
+            //         stations: [
+            //             {name: 'Southern Cross', x: 900, y: 600},
+            //             {name: 'Flagstaff', x: 1000, y: 500},
+            //             {name: 'Melbourne Central', x: 1100, y: 500},
+            //             {name: 'Parliament', x: 1200, y: 600},
+            //             {name: 'Flinders Street', x: 1100, y: 700},
+            //             {name: 'Richmond', x: 1200, y: 750},
+            //             {name: 'South Yarra', x: 1200, y: 950},
+            //             {name: 'Hawksburn', x: 1200, y: 1050},
+            //             {name: 'Toorak', x: 1200, y: 1150},
+            //             {name: 'Armadale', x: 1200, y: 1250},
+            //             {name: 'Malvern', x: 1200, y: 1350},
+            //             {name: 'Caulfield', x: 1200, y: 1450},
+            //             {name: 'Carnegie', x: 1200, y: 1550},
+            //             {name: 'Murrumbeena', x: 1200, y: 1650},
+            //             {name: 'Hughesdale', x: 1250, y: 1700},
+            //             {name: 'Oakleigh', x: 1300, y: 1700},
+            //             {name: 'Huntingdale', x: 1400, y: 1700},
+            //             {name: 'Clayton', x: 1500, y: 1700},
+            //             {name: 'Westall', x: 1600, y: 1700},
+            //             {name: 'Springvale', x: 1700, y: 1700},
+            //             {name: 'Sandown Park', x: 1800, y: 1700},
+            //             {name: 'Noble Park', x: 1900, y: 1700},
+            //             {name: 'Yarraman', x: 2000, y: 1700},
+            //             {name: 'Dandenong', x: 2100, y: 1700, major: true},
+            //             // Pakenham branch
+            //             {name: 'Hallam', x: 2150, y: 1650},
+            //             {name: 'Narre Warren', x: 2200, y: 1600},
+            //             {name: 'Berwick', x: 2250, y: 1550},
+            //             {name: 'Beaconsfield', x: 2300, y: 1500},
+            //             {name: 'Officer', x: 2350, y: 1450},
+            //             {name: 'Cardinia Road', x: 2350, y: 1350},
+            //             {name: 'Pakenham', x: 2350, y: 1250, major: true},
+            //             // Cranbourne branch
+            //             {name: 'Lynbrook', x: 2150, y: 1750},
+            //             {name: 'Merinda Park', x: 2200, y: 1750},
+            //             {name: 'Cranbourne', x: 2300, y: 1750, major: true}
+            //         ]
+            //     },
+
+            //     // Frankston - Green
+            //     'frankston': {
+            //         color: '#6BE35F',
+            //         stations: [
+            //             {name: 'Flinders Street', x: 1100, y: 700},
+            //             {name: 'Richmond', x: 1200, y: 750},
+            //             {name: 'South Yarra', x: 1100, y: 950},
+            //             {name: 'Windsor', x: 1000, y: 1050},
+            //             {name: 'Prahran', x: 950, y: 1150},
+            //             {name: 'Balaclava', x: 900, y: 1250},
+            //             {name: 'Ripponlea', x: 850, y: 1350},
+            //             {name: 'Elsternwick', x: 800, y: 1450},
+            //             {name: 'Gardenvale', x: 750, y: 1550},
+            //             {name: 'North Brighton', x: 700, y: 1650},
+            //             {name: 'Middle Brighton', x: 650, y: 1700},
+            //             {name: 'Brighton Beach', x: 600, y: 1750},
+            //             {name: 'Hampton', x: 550, y: 1800},
+            //             {name: 'Sandringham', x: 500, y: 1850, major: true},
+            //             {name: 'Highett', x: 450, y: 1800},
+            //             {name: 'Southland', x: 400, y: 1750},
+            //             {name: 'Cheltenham', x: 350, y: 1700},
+            //             {name: 'Mentone', x: 300, y: 1650},
+            //             {name: 'Parkdale', x: 250, y: 1600},
+            //             {name: 'Mordialloc', x: 200, y: 1550},
+            //             {name: 'Aspendale', x: 150, y: 1500},
+            //             {name: 'Edithvale', x: 100, y: 1450},
+            //             {name: 'Chelsea', x: 50, y: 1400},
+            //             {name: 'Bonbeach', x: 50, y: 1300},
+            //             {name: 'Carrum', x: 50, y: 1200},
+            //             {name: 'Seaford', x: 50, y: 1100},
+            //             {name: 'Kananook', x: 50, y: 1000},
+            //             {name: 'Frankston', x: 50, y: 900, major: true}
+            //         ]
+            //     },
+
+            //     // Sandringham - Pink/Magenta
+            //     'sandringham': {
+            //         color: '#F55DEB',
+            //         stations: [
+            //             {name: 'Flinders Street', x: 1100, y: 700},
+            //             {name: 'Richmond', x: 1200, y: 750},
+            //             {name: 'South Yarra', x: 1050, y: 950}
+            //         ]
+            //     },
+
+            //     // Glen Waverley - Light Blue
+            //     'glen-waverley': {
+            //         color: '#A6E3FF',
+            //         stations: [
+            //             {name: 'Flinders Street', x: 1100, y: 700},
+            //             {name: 'Richmond', x: 1200, y: 750},
+            //             {name: 'Burnley', x: 1350, y: 900},
+            //             {name: 'Heyington', x: 1450, y: 950},
+            //             {name: 'Kooyong', x: 1550, y: 1000},
+            //             {name: 'Tooronga', x: 1650, y: 1050},
+            //             {name: 'Gardiner', x: 1750, y: 1100},
+            //             {name: 'Glen Iris', x: 1850, y: 1150},
+            //             {name: 'Darling', x: 1950, y: 1200},
+            //             {name: 'East Malvern', x: 2050, y: 1250},
+            //             {name: 'Holmesglen', x: 2150, y: 1300},
+            //             {name: 'Jordanville', x: 2200, y: 1400},
+            //             {name: 'Mount Waverley', x: 2250, y: 1500, major: true},
+            //             {name: 'Syndal', x: 2300, y: 1600},
+            //             {name: 'Glen Waverley', x: 2350, y: 1700, major: true}
+            //         ]
+            //     },
+
+            //     // Belgrave/Lilydale/Alamein - Light Blue
+            //     'belgrave-lilydale': {
+            //         color: '#A6E3FF',
+            //         stations: [
+            //             {name: 'Flinders Street', x: 1100, y: 700},
+            //             {name: 'Richmond', x: 1200, y: 750},
+            //             {name: 'Burnley', x: 1400, y: 900},
+            //             {name: 'Hawthorn', x: 1500, y: 850},
+            //             {name: 'Glenferrie', x: 1600, y: 800},
+            //             {name: 'Auburn', x: 1700, y: 750},
+            //             {name: 'Camberwell', x: 1800, y: 700, major: true},
+            //             {name: 'East Camberwell', x: 1900, y: 650},
+            //             {name: 'Canterbury', x: 2000, y: 600},
+            //             {name: 'Chatham', x: 2100, y: 550},
+            //             {name: 'Surrey Hills', x: 2200, y: 500, major: true},
+            //             {name: 'Mont Albert', x: 2300, y: 450},
+            //             {name: 'Box Hill', x: 2400, y: 400, major: true},
+            //             // Continues to Belgrave/Lilydale
+            //             {name: 'Laburnum', x: 2450, y: 350},
+            //             {name: 'Blackburn', x: 2500, y: 300},
+            //             {name: 'Nunawading', x: 2550, y: 250},
+            //             {name: 'Mitcham', x: 2600, y: 200},
+            //             {name: 'Heatherdale', x: 2650, y: 150},
+            //             {name: 'Ringwood', x: 2700, y: 100, major: true}
+            //             // Alamein branch
+            //         ]
+            //     },
+
+            //     // Hurstbridge/Mernda - Red/Orange
+            //     'hurstbridge-mernda': {
+            //         color: '#EB8373',
+            //         stations: [
+            //             {name: 'Flinders Street', x: 1100, y: 700},
+            //             {name: 'Parliament', x: 1200, y: 600},
+            //             {name: 'Jolimont', x: 1350, y: 650},
+            //             {name: 'West Richmond', x: 1450, y: 600},
+            //             {name: 'Clifton Hill', x: 1550, y: 550, major: true},
+            //             // Hurstbridge branch
+            //             {name: 'Westgarth', x: 1650, y: 500},
+            //             {name: 'Dennis', x: 1750, y: 450},
+            //             {name: 'Fairfield', x: 1850, y: 400},
+            //             {name: 'Alphington', x: 1950, y: 350},
+            //             {name: 'Darebin', x: 2050, y: 300},
+            //             {name: 'Ivanhoe', x: 2150, y: 250, major: true},
+            //             {name: 'Eaglemont', x: 2250, y: 200},
+            //             {name: 'Heidelberg', x: 2350, y: 150},
+            //             {name: 'Rosanna', x: 2450, y: 100},
+            //             {name: 'Macleod', x: 2550, y: 50},
+            //             {name: 'Watsonia', x: 2650, y: 50},
+            //             {name: 'Greensborough', x: 2750, y: 50, major: true},
+            //             // Mernda branch
+            //             {name: 'Rushall', x: 1600, y: 600},
+            //             {name: 'Merri', x: 1650, y: 650},
+            //             {name: 'Northcote', x: 1700, y: 700},
+            //             {name: 'Croxton', x: 1750, y: 750},
+            //             {name: 'Thornbury', x: 1800, y: 800},
+            //             {name: 'Bell', x: 1850, y: 850},
+            //             {name: 'Preston', x: 1900, y: 900, major: true},
+            //             {name: 'Regent', x: 1950, y: 950},
+            //             {name: 'Reservoir', x: 2000, y: 1000, major: true},
+            //             {name: 'Keon Park', x: 2050, y: 1050},
+            //             {name: 'Thomastown', x: 2100, y: 1100},
+            //             {name: 'Lalor', x: 2150, y: 1150},
+            //             {name: 'Epping', x: 2200, y: 1200, major: true},
+            //             {name: 'South Morang', x: 2250, y: 1250},
+            //             {name: 'Middle Gorge', x: 2300, y: 1300},
+            //             {name: 'Hawkstowe', x: 2350, y: 1350},
+            //             {name: 'Mernda', x: 2400, y: 1400, major: true}
+            //         ]
+            //     },
+
+            //     // Upfield - Yellow
+            //     'upfield': {
+            //         color: '#F5EC5D',
+            //         stations: [
+            //             {name: 'Flinders Street', x: 1100, y: 700},
+            //             {name: 'Flagstaff', x: 1000, y: 500},
+            //             {name: 'Melbourne Central', x: 1100, y: 500},
+            //             {name: 'Parliament', x: 1200, y: 600},
+            //             {name: 'North Melbourne', x: 900, y: 400},
+            //             {name: 'Macaulay', x: 800, y: 350},
+            //             {name: 'Flemington Bridge', x: 700, y: 300},
+            //             {name: 'Royal Park', x: 600, y: 250},
+            //             {name: 'Jewell', x: 500, y: 200},
+            //             {name: 'Brunswick', x: 400, y: 150},
+            //             {name: 'Anstey', x: 300, y: 100},
+            //             {name: 'Moreland', x: 200, y: 50},
+            //             {name: 'Coburg', x: 100, y: 50, major: true},
+            //             {name: 'Batman', x: 50, y: 100},
+            //             {name: 'Merlynston', x: 50, y: 200},
+            //             {name: 'Fawkner', x: 50, y: 300},
+            //             {name: 'Gowrie', x: 50, y: 400},
+            //             {name: 'Upfield', x: 50, y: 500, major: true}
+            //         ]
+            //     },
+
+            //     // Craigieburn/Sunbury - Yellow
+            //     'craigieburn-sunbury': {
+            //         color: '#F5EC5D',
+            //         stations: [
+            //             {name: 'Flinders Street', x: 1100, y: 700},
+            //             {name: 'Southern Cross', x: 900, y: 600},
+            //             {name: 'Flagstaff', x: 1000, y: 500},
+            //             {name: 'Melbourne Central', x: 1100, y: 500},
+            //             {name: 'Parliament', x: 1200, y: 600},
+            //             {name: 'North Melbourne', x: 900, y: 300},
+            //             {name: 'Kensington', x: 800, y: 250},
+            //             {name: 'Newmarket', x: 700, y: 200},
+            //             {name: 'Ascot Vale', x: 600, y: 150},
+            //             {name: 'Moonee Ponds', x: 500, y: 100},
+            //             {name: 'Essendon', x: 400, y: 50, major: true},
+            //             {name: 'Glenbervie', x: 300, y: 50},
+            //             {name: 'Strathmore', x: 200, y: 50},
+            //             {name: 'Pascoe Vale', x: 100, y: 100},
+            //             {name: 'Oak Park', x: 50, y: 150},
+            //             {name: 'Glenroy', x: 50, y: 250, major: true},
+            //             {name: 'Jacana', x: 50, y: 350},
+            //             {name: 'Broadmeadows', x: 50, y: 450, major: true},
+            //             {name: 'Coolaroo', x: 50, y: 550},
+            //             {name: 'Roxburgh Park', x: 50, y: 650},
+            //             {name: 'Craigieburn', x: 50, y: 750, major: true},
+            //             // Sunbury branch
+            //             {name: 'Diggers Rest', x: 100, y: 500},
+            //             {name: 'Sunbury', x: 150, y: 550, major: true}
+            //         ]
+            //     },
+
+            //     // Werribee/Williamstown - Pink/Magenta
+            //     'werribee-williamstown': {
+            //         color: '#F55DEB',
+            //         stations: [
+            //             {name: 'Flinders Street', x: 1100, y: 700},
+            //             {name: 'Southern Cross', x: 900, y: 600},
+            //             {name: 'Footscray', x: 700, y: 300, major: true},
+            //             {name: 'Seddon', x: 600, y: 350},
+            //             {name: 'Yarraville', x: 500, y: 400},
+            //             {name: 'Spotswood', x: 400, y: 450},
+            //             {name: 'Newport', x: 300, y: 500, major: true},
+            //             // Williamstown branch
+            //             {name: 'North Williamstown', x: 250, y: 550},
+            //             {name: 'Williamstown', x: 200, y: 600, major: true},
+            //             // Werribee branch
+            //             {name: 'Seaholme', x: 250, y: 500},
+            //             {name: 'Altona', x: 200, y: 550},
+            //             {name: 'Westona', x: 150, y: 600},
+            //             {name: 'Laverton', x: 100, y: 650, major: true},
+            //             {name: 'Aircraft', x: 50, y: 700},
+            //             {name: 'Williams Landing', x: 50, y: 800},
+            //             {name: 'Hoppers Crossing', x: 50, y: 900, major: true},
+            //             {name: 'Werribee', x: 50, y: 1000, major: true}
+            //         ]
+            //     }
+            // };
+
+            // Draw all lines and stations
+            for (const [lineKey, lineData] of Object.entries(lineRoutes)) {
+                drawLine(lineData.stations, lineData.color);
+            }
+
+            // Draw City Loop
+            drawCityLoop();
+        }
+
+        function drawLine(stations, color) {
+            const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+
+            // Draw line path
+            let pathData = '';
+            stations.forEach((station, index) => {
+                if (index === 0) {
+                    pathData += `M ${station.x} ${station.y}`;
+                } else {
+                    pathData += ` L ${station.x} ${station.y}`;
+                }
+            });
+
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            path.setAttribute('class', 'train-line');
+            path.setAttribute('d', pathData);
+            path.setAttribute('stroke', color);
+            g.appendChild(path);
+
+            // Draw stations
+            stations.forEach(station => {
+                drawStation(station, color, g);
+            });
+
+            mapSvg.appendChild(g);
+        }
+
+        function drawStation(station, color, parent) {
+            const stationGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            stationGroup.setAttribute('class', 'station-group');
+            stationGroup.setAttribute('data-name', station.name);
+
+            // Match station name to ID from our loaded data
+            const stationData = allStationsData?.find(s =>
+                s.stop_name.toLowerCase() === station.name.toLowerCase()
+            );
+
+            if (stationData) {
+                stationGroup.setAttribute('data-stop-id', stationData.stop_id);
+            }
+
+            // Station dot
+            const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            dot.setAttribute('class', `station-dot ${station.major ? 'major' : ''}`);
+            dot.setAttribute('cx', station.x);
+            dot.setAttribute('cy', station.y);
+            dot.setAttribute('r', station.major ? 6 : 4);
+            dot.setAttribute('fill', color);
+            dot.setAttribute('stroke', 'white');
+            dot.setAttribute('stroke-width', '2');
+            stationGroup.appendChild(dot);
+
+            // Station label
+            const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            label.setAttribute('class', `station-label ${station.major ? 'major' : ''}`);
+            label.setAttribute('x', station.x + 8);
+            label.setAttribute('y', station.y + 3);
+            label.textContent = station.name;
+            stationGroup.appendChild(label);
+
+            // Click handler
+            stationGroup.addEventListener('click', async function (e) {
+                e.stopPropagation();
+
+                if (stationData) {
+                    document.querySelectorAll('.station-dot').forEach(d => {
+                        d.classList.remove('selected');
+                    });
+                    dot.classList.add('selected');
+
+                    selectedStation = {
+                        stopId: stationData.stop_id,
+                        stationName: station.name
+                    };
+
+                    await loadStationDepartures(stationData.stop_id, station.name);
+                }
+            });
+
+            parent.appendChild(stationGroup);
+        }
+
+        function drawCityLoop() {
+            const loop = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            loop.setAttribute('class', 'city-loop');
+            loop.setAttribute('d', 'M 1000,500 L 1200,500 L 1200,700 L 1000,700 Z');
+            mapSvg.appendChild(loop);
+        }
+
+        // Zoom controls
+        document.getElementById('zoom-in').addEventListener('click', () => {
+            scale *= 1.3;
+            updateTransform();
+        });
+
+        document.getElementById('zoom-out').addEventListener('click', () => {
+            scale /= 1.3;
+            updateTransform();
+        });
+
+        document.getElementById('reset-view').addEventListener('click', () => {
+            scale = 1;
+            translateX = 0;
+            translateY = 0;
+            updateTransform();
+        });
+
+        document.getElementById('fit-all').addEventListener('click', () => {
+            scale = 0.4;
+            translateX = 100;
+            translateY = 50;
+            updateTransform();
+        });
+
+        function updateTransform() {
+            mapSvg.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+        }
+
+        // Pan functionality
+        mapContainer.addEventListener('mousedown', (e) => {
+            if (e.target.closest('.station-group')) return;
+            isDragging = true;
+            startX = e.clientX - translateX;
+            startY = e.clientY - translateY;
+            mapContainer.classList.add('dragging');
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            e.preventDefault();
+            translateX = e.clientX - startX;
+            translateY = e.clientY - startY;
+            updateTransform();
+        });
+
+        document.addEventListener('mouseup', () => {
+            isDragging = false;
+            mapContainer.classList.remove('dragging');
+        });
+
+        // Mouse wheel zoom
+        mapContainer.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const delta = e.deltaY > 0 ? 0.9 : 1.1;
+            scale *= delta;
+            scale = Math.max(0.3, Math.min(5, scale));
+            updateTransform();
+        });
+
+        // Search functionality
+        let searchTimeout;
+        stationSearch.addEventListener('input', (e) => {
+            clearTimeout(searchTimeout);
+            const query = e.target.value.toLowerCase().trim();
+
+            searchTimeout = setTimeout(() => {
+                document.querySelectorAll('.station-group').forEach(station => {
+                    const name = station.dataset.name.toLowerCase();
+                    const label = station.querySelector('.station-label');
+
+                    if (!query || name.includes(query)) {
+                        station.style.opacity = '1';
+                        if (label) label.style.fontWeight = query && name.includes(query) ? 'bold' : 'normal';
+                    } else {
+                        station.style.opacity = '0.15';
+                        if (label) label.style.fontWeight = 'normal';
+                    }
+                });
+            }, 200);
+        });
+
+        // Load station departures
+        async function loadStationDepartures(stopId, stationName) {
+            stationInfo.innerHTML = `
+                <div class="station-name">${stationName}</div>
+                <p style="color: #666;">Loading departures...</p>
+            `;
+
+            try {
+                const response = await fetch(`${API_URL}/?stop=${stopId}`);
+                const data = await response.json();
+
+                if (!data.departures || data.departures.length === 0) {
+                    stationInfo.innerHTML = `
+                        <div class="station-name">${stationName}</div>
+                        <p style="color: #666;">No upcoming departures</p>
+                    `;
+                    return;
+                }
+
+                let html = `<div class="station-name">${stationName}</div><div class="departures-list">`;
+
+                data.departures.slice(0, 8).forEach(dep => {
+                    const time = dep.estimated_departure_utc || dep.scheduled_departure_utc;
+                    if (!time) return;
+
+                    const diff = new Date(time).getTime() - Date.now();
+                    const mins = Math.ceil(diff / 60000);
+
+                    if (!Number.isFinite(mins) || mins < 0) return;
+
+                    const routeId = dep.route_id;
+                    const lineName = LINES[routeId] || routeId;
+                    const direction = data.directions?.[dep.direction_id]?.direction_name || '';
+                    const platform = dep.platform_number;
+                    const lineColor = LINE_COLOURS[lineName] || '#666';
+
+                    html += `
+                        <div class="departure-item" style="border-left-color: ${lineColor}">
+                            <div class="departure-line" style="color: ${lineColor}">${lineName}</div>
+                            <div class="departure-details">
+                                <span>${direction || 'Destination'}</span>
+                                <span>Platform ${platform}</span>
+                            </div>
+                            <div class="departure-details">
+                                <span></span>
+                                <span class="departure-time">${mins} min</span>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += `</div>`;
+                stationInfo.innerHTML = html;
+
+            } catch (error) {
+                console.error('Error loading departures:', error);
+                stationInfo.innerHTML = `
+                    <div class="station-name">${stationName}</div>
+                    <p style="color: #e74c3c;">Error loading departure information</p>
+                `;
+            }
+        }
+
+        // Auto-refresh departures
+        setInterval(() => {
+            if (selectedStation) {
+                loadStationDepartures(selectedStation.stopId, selectedStation.stationName);
+            }
+        }, 30000);
+
+        // Initialize
+        loadStations();
+    </script>
+</body>
+
+</html>

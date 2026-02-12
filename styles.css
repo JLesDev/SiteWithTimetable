@@ -331,6 +331,7 @@ input::placeholder {
 #train-board {
   max-width: 700px;
   margin: 30px auto;
+  margin-top: 0;
   display: grid;
   gap: 12px;
 }
@@ -430,7 +431,7 @@ input::placeholder {
     padding: 12px;
     background: #02343F;
     color: #F0EDCC;
-    border: 1px solid #F0EDCC;
+    border: 1px solid rgba(240, 237, 204, 0.3);
     border-radius: 5px;
     cursor: pointer;
     text-align: left;
@@ -498,9 +499,21 @@ html::-webkit-scrollbar-track {
 html::-webkit-scrollbar-thumb {
     border-radius: 8px;
   background-image: url("https://i.ibb.co/q95CBdZ/train.png");
+    /* background-image: url("https://i.imgur.com/3AGtGrv.png"); */
     background-position:center center;
     background-repeat: no-repeat;
     background-size: 35px;
+}
+
+.tracker-controls button {
+    background: #ff56b9;
+    border: none;
+    padding: 6px 12px;
+    margin-right: 6px;
+    cursor: pointer;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 600;
 }
 
 .station-cell-title {
