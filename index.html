@@ -68,8 +68,21 @@
     </section>
 
     <section class="tracker">
-        <h2>City Loop Live Tracker</h2>
+        <h2>Melbourne Metro Live Tracker</h2>
+
+        <div class="tracker-controls">
+            <button data-sort="time" class="active">Upcoming</button>
+            <button data-sort="station">Station</button>
+            <button data-sort="search">Search All</button>
+        </div>
+
+        <div id="search-container" style="display:none; margin:15px 0;">
+            <input type="text" id="station-search" placeholder="Search station name..."
+                style="padding:10px; width:100%; max-width:400px;">
+        </div>
+
         <div id="train-board">Loading trains…</div>
+
     </section>
 
 
@@ -127,30 +140,508 @@
     </script>
 
     <script>
-        // const STOPS = {
-        //     // flinders: 22238,
-        //     // parliament: 10924,
-        //     // melbourneCentral: 12197,
-        //     // flagstaff: 10920
-        //     flinders: 1074,
-        //     parliament: 1068,
-        //     melbourneCentral: 1071,
-        //     flagstaff: 1072,
-        //     southernCross: 1062
-        // };
+        const FLINDERS_STOP_ID = 1071;
+
+        let searchQuery = "";
+        let allStations = {};
 
         const STOPS = {
-            flinders: 22238,
-            parliament: 10924,
-            melbourneCentral: 12197,
-            flagstaff: 10920,
+            flinders: 1071,
+            parliament: 1155,
+            melbourneCentral: 1120,
+            flagstaff: 1068,
             southernCross: 1181
         };
+
+        const STATION_NAMES = {
+            1071: 'Flinders Street',
+            1155: 'Parliament',
+            1120: 'Melbourne Central',
+            1068: 'Flagstaff',
+            1181: 'Southern Cross'
+        };
+
+        const LINES = {
+            1: 'Alamein',
+            2: 'Belgrave',
+            3: 'Craigieburn',
+            4: 'Cranbourne',
+            5: 'Flemington Racecourse',
+            6: 'Frankston',
+            7: 'Glen Waverley',
+            8: 'Hurstbridge',
+            9: 'Lilydale',
+            10: 'Mernda',
+            11: 'Pakenham',
+            12: 'Sandringham',
+            13: 'Stony Point',
+            14: 'Sunbury',
+            15: 'Upfield',
+            16: 'Werribee',
+            17: 'Williamstown',
+        }
+
+        const LINE_COLOURS = {
+            'Alamein': "#A6E3FF",
+            'Belgrave': "#A6E3FF",
+            'Craigieburn': "#F5EC5D",
+            'Cranbourne': "#73EBE3",
+            'Flemington Racecourse': "#F5EC5D",
+            'Frankston': "#6BE35F",
+            'Glen Waverley': "#A6E3FF",
+            'Hurstbridge': "#EB8373",
+            'Lilydale': "#A6E3FF",
+            'Mernda': "#EB8373",
+            'Pakenham': "#73EBE3",
+            'Sandringham': "#F55DEB",
+            'Stony Point': "#6BE35F",
+            'Sunbury': "#F5EC5D",
+            'Upfield': "#F5EC5D",
+            'Werribee': "#F55DEB",
+            'Williamstown': "#F55DEB",
+        }
+
+        const LOOP_POSITIONS = {
+            "Flagstaff": [1, 1],
+            "Melbourne Central": [1, 2],
+            "Parliament": [2, 3],
+            "Flinders Street": [3, 2],
+            "Southern Cross": [2, 1],
+        };
+
+        let sortMode = "time";
+        let cachedResults = [];
+
+        // async function loadAllStations() {
+        //     try {
+        //         const res = await fetch("stations.json"); 
+        //         const data = await res.json();
+
+        //         if (data.stations && Array.isArray(data.stations)) {
+        //             data.stations.forEach(station => {
+        //                 allStations[station.stop_id] = station.stop_name;
+        //             });
+        //             console.log("Loaded", Object.keys(allStations).length, "stations");
+        //         }
+        //     } catch (err) {
+        //         console.error("Failed to load stations:", err);
+        //     }
+        // }
+
+        async function loadAllStations() {
+            try {
+                const res = await fetch("https://ptv.jontyleslie.workers.dev/stations"); // Changed from stations.json
+                const data = await res.json();
+
+                if (data.stations && Array.isArray(data.stations)) {
+                    data.stations.forEach(station => {
+                        allStations[station.stop_id] = station.stop_name;
+                    });
+                    console.log("Loaded", Object.keys(allStations).length, "stations");
+                }
+            } catch (err) {
+                console.error("Failed to load stations:", err);
+            }
+        }
+
+        loadAllStations();
+
+        document.addEventListener("click", e => {
+            if (!e.target.dataset.sort) return;
+
+            document
+                .querySelectorAll(".tracker-controls button")
+                .forEach(b => b.classList.remove("active"));
+
+            e.target.classList.add("active");
+            sortMode = e.target.dataset.sort;
+
+            const searchBox = document.getElementById("search-container");
+
+            if (sortMode === "search") {
+                searchBox.style.display = "block";
+            } else {
+                searchBox.style.display = "none";
+                searchQuery = "";
+                document.getElementById("station-search").value = "";
+            }
+
+            renderBoard();
+        });
+
+        document.addEventListener("input", e => {
+            if (e.target.id === "station-search") {
+                searchQuery = e.target.value.toLowerCase();
+                renderBoard();
+            }
+        });
+
+        async function loadTrains() {
+            const board = document.getElementById("train-board");
+            board.innerHTML = "Loading trains…";
+
+            try {
+                const results = [];
+
+                for (let key in STOPS) {
+                    const stopId = STOPS[key];
+
+                    const res = await fetch(`https://ptv.jontyleslie.workers.dev/?stop=${stopId}`);
+                    const data = await res.json();
+
+                    if (!data.departures) continue;
+
+                    data.departures.slice(0, 3).forEach(dep => {
+                        const time =
+                            dep.estimated_departure_utc ||
+                            dep.scheduled_departure_utc;
+
+                        if (!time) return;
+
+                        const diff = new Date(time).getTime() - Date.now();
+                        const mins = Math.ceil(diff / 60000);
+
+                        if (!Number.isFinite(mins) || mins < 0) return;
+
+                        const route =
+                            data.routes?.[dep.route_id]?.route_short_name ||
+                            data.routes?.[dep.route_id]?.route_name ||
+                            "";
+
+                        const direction =
+                            data.directions?.[dep.direction_id]?.direction_name || "";
+
+                        const run = data.runs?.[dep.run_id]?.run_name || "";
+                        const route_id = dep.route_id;
+                        const platform = dep.platform_number;
+                        const line_name = LINES[route_id] || route_id;
+                        const label = route || run || direction || "Train";
+
+                        results.push({
+                            station: STATION_NAMES[stopId] || key.replace(/([A-Z])/g, " $1"),
+                            line: label,
+                            destination: line_name,
+                            platform,
+                            mins
+                        });
+                    });
+                }
+
+                cachedResults = results;
+                renderBoard();
+
+            } catch (err) {
+                board.innerHTML = "Tracker offline.";
+                console.error(err);
+            }
+        }
+
+        loadTrains();
+        setInterval(loadTrains, 30000);
+
+        function renderLoop(board) {
+            const grouped = {};
+
+            cachedResults.forEach(t => {
+                if (!grouped[t.station]) grouped[t.station] = [];
+                grouped[t.station].push(t);
+            });
+
+            Object.entries(LOOP_POSITIONS).forEach(([station, pos]) => {
+                const cell = document.createElement("div");
+                cell.className = "loop-station";
+                cell.style.gridRow = pos[0];
+                cell.style.gridColumn = pos[1];
+
+                cell.innerHTML = `<div class="loop-title">${station}</div>`;
+
+                (grouped[station] || []).slice(0, 3).forEach(t => {
+                    const row = document.createElement("div");
+                    row.className = "loop-train";
+
+                    row.innerHTML = `
+                    <span style="color:${LINE_COLOURS[t.destination] || "#fff"}">
+                      ${t.destination}
+                    </span>
+                    <span>${t.mins}m</span>
+                `;
+
+                    cell.appendChild(row);
+                });
+
+                board.appendChild(cell);
+            });
+        }
+
+        function renderBoard() {
+            const board = document.getElementById("train-board");
+            board.innerHTML = "";
+
+            if (sortMode === "station") {
+                board.classList.add("loop");
+                renderLoop(board);
+                return;
+            }
+
+            board.classList.remove("loop");
+
+            let sorted = [...cachedResults];
+
+            if (sortMode === "time") {
+                sorted.sort((a, b) => a.mins - b.mins);
+            }
+
+            if (sortMode === "search") {
+                const matchingStations = Object.entries(allStations)
+                    .filter(([id, name]) => name.toLowerCase().includes(searchQuery))
+                    .map(([id]) => parseInt(id));
+
+                if (matchingStations.length === 0 && searchQuery) {
+                    board.innerHTML = "No matching station found.";
+                    return;
+                }
+
+                if (matchingStations.length > 0 && searchQuery) {
+                    board.innerHTML = `
+                    <div class="search-results">
+                        <h3>Found ${matchingStations.length} matching station(s):</h3>
+                        <div class="station-list">
+                            ${matchingStations.slice(0, 10).map(stopId => `
+                                <button class="station-button" data-stop-id="${stopId}">
+                                    ${allStations[stopId]}
+                                </button>
+                            `).join('')}
+                        </div>
+                        ${matchingStations.length > 10 ? `<p>Showing first 10 of ${matchingStations.length} results. Keep typing to narrow down.</p>` : ''}
+                    </div>
+                `;
+
+                    document.querySelectorAll('.station-button').forEach(btn => {
+                        btn.addEventListener('click', async () => {
+                            const stopId = btn.dataset.stopId;
+                            await loadStationDepartures(stopId);
+                        });
+                    });
+
+                    return;
+                }
+            }
+
+            sorted.slice(0, 8).forEach(t => {
+                const row = document.createElement("div");
+                row.className = "train-row";
+
+                row.innerHTML = `
+                <span class="train-station">${t.station}</span>
+                <span class="train-line" style="color:${LINE_COLOURS[t.destination] || "#000"}">
+                    ${t.destination}
+                </span>
+                <span class="train-platform">Platform ${t.platform}</span>
+                <span>${t.mins} min</span>
+            `;
+
+                board.appendChild(row);
+            });
+        }
+
+        async function loadStationDepartures(stopId) {
+            const board = document.getElementById("train-board");
+            board.innerHTML = `Loading departures for ${allStations[stopId]}...`;
+
+            try {
+                const res = await fetch(`https://ptv.jontyleslie.workers.dev/?stop=${stopId}`);
+                const data = await res.json();
+
+                if (!data.departures || data.departures.length === 0) {
+                    board.innerHTML = `No upcoming departures for ${allStations[stopId]}.`;
+                    return;
+                }
+
+                board.innerHTML = `<h3>Departures from ${allStations[stopId]}</h3>`;
+
+                data.departures.slice(0, 10).forEach(dep => {
+                    const time = dep.estimated_departure_utc || dep.scheduled_departure_utc;
+                    if (!time) return;
+
+                    const diff = new Date(time).getTime() - Date.now();
+                    const mins = Math.ceil(diff / 60000);
+
+                    if (!Number.isFinite(mins) || mins < 0) return;
+
+                    const route_id = dep.route_id;
+                    const platform = dep.platform_number;
+                    const line_name = LINES[route_id] || route_id;
+                    const direction = data.directions?.[dep.direction_id]?.direction_name || "";
+
+                    const row = document.createElement("div");
+                    row.className = "train-row";
+
+                    row.innerHTML = `
+                    <span class="train-line" style="color:${LINE_COLOURS[line_name] || "#000"}">
+                        ${line_name}
+                    </span>
+                    <span class="train-station">${direction}</span>
+                    <span class="train-platform">Platform ${platform}</span>
+                    <span>${mins} min</span>
+                `;
+
+                    board.appendChild(row);
+                });
+
+                const backBtn = document.createElement("button");
+                backBtn.className = "back-button";
+                backBtn.textContent = "Back to search";
+                backBtn.style.marginTop = "20px";
+                backBtn.onclick = () => renderBoard();
+                board.appendChild(backBtn);
+
+            } catch (err) {
+                board.innerHTML = `Failed to load departures for ${allStations[stopId]}.`;
+                console.error(err);
+            }
+        }
+    </script>
+
+    <!-- <script>
+        const FLINDERS_STOP_ID = 1071;
+
+        let searchQuery = "";
+
+        const STOPS = {
+            flinders: 1071,
+            parliament: 1155,
+            melbourneCentral: 1120,
+            flagstaff: 1068,
+            southernCross: 1181
+        };
+
+        const STOPS_EXT = {
+            flinders: 1071,
+            parliament: 1155,
+            melbourneCentral: 1120,
+            flagstaff: 1068,
+            southernCross: 1181
+        };
+
+        const STATION_NAMES = {
+            1071: 'Flinders Street',
+            1155: 'Parliament',
+            1120: 'Melbourne Central',
+            1068: 'Flagstaff',
+            1181: 'Southern Cross'
+        };
+
+        const LINES = {
+            1: 'Alamein',
+            2: 'Belgrave',
+            3: 'Craigieburn',
+            4: 'Cranbourne',
+            5: 'Flemington Racecourse',
+            6: 'Frankston',
+            7: 'Glen Waverley',
+            8: 'Hurstbridge',
+            9: 'Lilydale',
+            10: 'Mernda',
+            11: 'Pakenham',
+            12: 'Sandringham',
+            13: 'Stony Point',
+            14: 'Sunbury',
+            15: 'Upfield',
+            16: 'Werribee',
+            17: 'Williamstown',
+        }
+
+        const LINE_COLOURS = {
+            'Alamein': "#A6E3FF",
+            'Belgrave': "#A6E3FF",
+            'Craigieburn': "#F5EC5D",
+            'Cranbourne': "#73EBE3",
+            'Flemington Racecourse': "#F5EC5D",
+            'Frankston': "#6BE35F",
+            'Glen Waverley': "#A6E3FF",
+            'Hurstbridge': "#EB8373",
+            'Lilydale': "#A6E3FF",
+            'Mernda': "#EB8373",
+            'Pakenham': "#73EBE3",
+            'Sandringham': "#F55DEB",
+            'Stony Point': "#6BE35F",
+            'Sunbury': "#F5EC5D",
+            'Upfield': "#F5EC5D",
+            'Werribee': "#F55DEB",
+            'Williamstown': "#F55DEB",
+        }
+
+        const LOOP_POSITIONS = {
+            "Flagstaff": [1, 1],
+            "Melbourne Central": [1, 2],
+            "Parliament": [2, 3],
+            "Flinders Street": [3, 2],
+            "Southern Cross": [2, 1],
+        };
+
+
+        let sortMode = "time";
+        let cachedResults = [];
+
+        // document.addEventListener("click", e => {
+        //     if (!e.target.dataset.sort) return;
+
+        //     document
+        //         .querySelectorAll(".tracker-controls button")
+        //         .forEach(b => b.classList.remove("active"));
+
+        //     e.target.classList.add("active");
+        //     sortMode = e.target.dataset.sort;
+
+        //     renderBoard();
+        // });
+
+        async function loadAllStops() {
+            const res = await fetch("https://ptv.jontyleslie.workers.dev/ptv_stops");
+            const data = await res.json();
+
+            window.ALL_STOPS = data.stops;
+            window.ALL_STOP_NAMES = data.names;
+
+            console.log("Loaded", data.count, "stations");
+        }
+
+
+        document.addEventListener("click", e => {
+            if (!e.target.dataset.sort) return;
+
+            document
+                .querySelectorAll(".tracker-controls button")
+                .forEach(b => b.classList.remove("active"));
+
+            e.target.classList.add("active");
+            sortMode = e.target.dataset.sort;
+
+            const searchBox = document.getElementById("search-container");
+
+            if (sortMode === "search") {
+                searchBox.style.display = "block";
+            } else {
+                searchBox.style.display = "none";
+                searchQuery = "";
+                document.getElementById("station-search").value = "";
+            }
+
+            renderBoard();
+        });
+
+        document.addEventListener("input", e => {
+            if (e.target.id === "station-search") {
+                searchQuery = e.target.value.toLowerCase();
+                renderBoard();
+            }
+        });
 
 
 
         async function loadTrains() {
             const board = document.getElementById("train-board");
+
             board.innerHTML = "Loading trains…";
 
             try {
@@ -179,22 +670,33 @@
 
                         if (!Number.isFinite(mins) || mins < 0) return;
 
-                        const run =
-                            data.runs?.[dep.run_id]?.run_name || "";
+                        const route =
+                            data.routes?.[dep.route_id]?.route_short_name ||
+                            data.routes?.[dep.route_id]?.route_name ||
+                            "";
 
                         const direction =
                             data.directions?.[dep.direction_id]?.direction_name || "";
 
-                        const route =
-                            data.routes?.[dep.route_id]?.route_name || "";
+                        const run =
+                            data.runs?.[dep.run_id]?.run_name || "";
 
-                        const label = run || direction || route || "Train";
+                        const route_id = dep.route_id;
+
+                        const platform = dep.platform_number;
+
+                        const line_name = LINES[route_id] || route_id;
+
+                        const label = route || run || direction || "Train";
+
 
 
                         results.push({
-                            station: key.replace(/([A-Z])/g, " $1"),
+                            station: STATION_NAMES[stopId] || key.replace(/([A-Z])/g, " $1"),
                             line: label,
-                            destination: direction,
+                            // destination: direction,
+                            destination: line_name,
+                            platform,
                             mins
                         });
 
@@ -202,22 +704,29 @@
                     });
                 }
 
-                board.innerHTML = "";
+                // board.innerHTML = "";
 
-                results
-                    .sort((a, b) => a.mins - b.mins)
-                    .slice(0, 8)
-                    .forEach(t => {
-                        const row = document.createElement("div");
-                        row.className = "train-row";
-                        row.innerHTML = `
-  <span class="train-station">${t.station}</span>
-  <span class="train-line">${t.line}</span>
-  <span>${t.mins} min</span>
-`;
+                // // <span class="train-line">${t.line}${t.destination ? " → " + t.destination : ""}</span>
 
-                        board.appendChild(row);
-                    });
+                // results
+                //     .sort((a, b) => a.mins - b.mins)
+                //     .slice(0, 8)
+                //     .forEach(t => {
+                //         const row = document.createElement("div");
+                //         console.log(t);
+                //         row.className = "train-row";
+                //         row.innerHTML = `
+                //           <span class="train-station">${t.station}</span>
+                //           <span class="train-line" style="color: ${LINE_COLOURS[t.destination] || '#000'}">${t.destination ? "" + t.destination : ""}</span>
+                //           <span class="train-platform">Platform ${t.platform}</span>
+                //           <span>${t.mins} min</span>
+                //         `;
+
+                //         board.appendChild(row);
+                //     });
+
+                cachedResults = results;
+                renderBoard();
 
             } catch (err) {
                 board.innerHTML = "Tracker offline.";
@@ -227,7 +736,150 @@
 
         loadTrains();
         setInterval(loadTrains, 30000);
-    </script>
+
+        function renderLoop(board) {
+            const grouped = {};
+
+            cachedResults.forEach(t => {
+                if (!grouped[t.station]) grouped[t.station] = [];
+                grouped[t.station].push(t);
+            });
+
+            Object.entries(LOOP_POSITIONS).forEach(([station, pos]) => {
+                const cell = document.createElement("div");
+                cell.className = "loop-station";
+                cell.style.gridRow = pos[0];
+                cell.style.gridColumn = pos[1];
+
+                cell.innerHTML = `<div class="loop-title">${station}</div>`;
+
+                (grouped[station] || []).slice(0, 3).forEach(t => {
+                    const row = document.createElement("div");
+                    row.className = "loop-train";
+
+                    row.innerHTML = `
+        <span style="color:${LINE_COLOURS[t.destination] || "#fff"}">
+          ${t.destination}
+        </span>
+        <span>${t.mins}m</span>
+      `;
+
+                    cell.appendChild(row);
+                });
+
+                board.appendChild(cell);
+            });
+        }
+
+        function renderBoard() {
+            const board = document.getElementById("train-board");
+            board.innerHTML = "";
+
+            if (sortMode === "station") {
+                board.classList.add("loop");
+                renderLoop(board);
+                return;
+            }
+
+            board.classList.remove("loop");
+
+            let sorted = [...cachedResults];
+
+            if (sortMode === "time") {
+                sorted.sort((a, b) => a.mins - b.mins);
+            }
+
+            if (sortMode === "search") {
+                const filtered = cachedResults.filter(t =>
+                    t.station.toLowerCase().includes(searchQuery)
+                );
+
+                filtered
+                    .sort((a, b) => a.mins - b.mins)
+                    .slice(0, 12)
+                    .forEach(t => {
+                        const row = document.createElement("div");
+                        row.className = "train-row";
+
+                        row.innerHTML = `
+                <span class="train-station">${t.station}</span>
+                <span class="train-line" style="color:${LINE_COLOURS[t.destination] || "#000"}">
+                    ${t.destination}
+                </span>
+                <span class="train-platform">Platform ${t.platform}</span>
+                <span>${t.mins} min</span>
+            `;
+
+                        board.appendChild(row);
+                    });
+
+                if (filtered.length === 0) {
+                    board.innerHTML = "No matching station found.";
+                }
+
+                return;
+            }
+
+
+            // if (sortMode === "line") {
+            //     sorted.sort((a, b) =>
+            //         a.destination.localeCompare(b.destination) || a.mins - b.mins
+            //     );
+            // }
+
+            // if (sortMode === "line") {
+            //     const perLine = new Map();
+
+            //     cachedResults
+            //         .filter(t => t.station === "Flinders Street")
+            //         .forEach(t => {
+            //             if (!perLine.has(t.destination) || t.mins < perLine.get(t.destination).mins) {
+            //                 perLine.set(t.destination, t);
+            //             }
+            //         });
+
+            //     [...perLine.values()]
+            //         .sort((a, b) => a.mins - b.mins)
+            //         .forEach(t => {
+            //             const row = document.createElement("div");
+            //             row.className = "train-row";
+
+            //             row.innerHTML = `
+            //               <span class="train-station">${t.destination}</span>
+            //               <span class="train-platform">Platform ${t.platform}</span>
+            //               <span style="color:${LINE_COLOURS[t.destination] || "#fff"}">
+            //                 ${t.mins} min
+            //               </span>
+            //             `;
+
+            //             board.appendChild(row);
+            //         });
+
+            //     return;
+            // }
+
+
+            sorted.slice(0, 8).forEach(t => {
+                const row = document.createElement("div");
+                row.className = "train-row";
+
+                row.innerHTML = `
+      <span class="train-station">${t.station}</span>
+      <span class="train-line" style="color:${LINE_COLOURS[t.destination] || "#000"}">
+        ${t.destination}
+      </span>
+      <span class="train-platform">Platform ${t.platform}</span>
+      <span>${t.mins} min</span>
+    `;
+
+                board.appendChild(row);
+            });
+        }
+
+
+
+
+    </script> -->
 
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
