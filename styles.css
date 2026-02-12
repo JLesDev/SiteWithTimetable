@@ -463,3 +463,70 @@ input,
 #metro-title {
     margin-bottom: 20px;
 }
+
+.all-stations-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 15px;
+    padding: 20px;
+    max-height: 600px;
+    overflow-y: auto;
+    scrollbar-color: #5b0a5e #24839b; 
+    scrollbar-width: thin; 
+}
+
+.station-cell {
+    background: #02343F;
+    border: 1px solid rgba(240, 237, 204, 0.3);
+    border-radius: 8px;
+    padding: 12px;
+    min-height: 120px;
+}
+
+html::-webkit-scrollbar {
+    width: 20px;
+}
+        
+html::-webkit-scrollbar-track {
+    border-radius: 8px;
+    background-image: url("https://i.ibb.co/5150925/tracks.png");
+    background-position: -5px;
+    background-repeat: repeat-y;
+    background-size: 50px;
+}
+        
+html::-webkit-scrollbar-thumb {
+    border-radius: 8px;
+  background-image: url("https://i.ibb.co/q95CBdZ/train.png");
+    background-position:center center;
+    background-repeat: no-repeat;
+    background-size: 35px;
+}
+
+.station-cell-title {
+    font-weight: bold;
+    color: #F0EDCC;
+    margin-bottom: 10px;
+    font-size: 0.9rem;
+    border-bottom: 1px solid #F0EDCC;
+    padding-bottom: 5px;
+}
+
+.station-cell-loading {
+    color: #F0EDCC;
+    opacity: 0.6;
+    font-size: 0.85rem;
+    padding: 5px 0;
+}
+
+.station-cell-train {
+    display: flex;
+    justify-content: space-between;
+    padding: 5px 0;
+    font-size: 0.85rem;
+    border-bottom: 1px solid rgba(240, 237, 204, 0.2);
+}
+
+.station-cell-train:last-child {
+    border-bottom: none;
+}
