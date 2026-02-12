@@ -452,3 +452,14 @@ input::placeholder {
     color: white;
     font-weight: bold;
 }
+
+button,
+a,
+input,
+.toggle {
+  -webkit-tap-highlight-color: transparent;
+}
+
+#metro-title {
+    margin-bottom: 20px;
+}
