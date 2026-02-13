@@ -368,7 +368,7 @@
 
         async function renderAllStationsGrid(board) {
             board.innerHTML = "<div style='padding: 20px; text-align: center;'>Loading all stations... This may take a moment.</div>";
-
+            board.style.display = "grid";
             const majorStations = Object.entries(allStations)
                 .filter(([id, name]) => {
                     return true;
