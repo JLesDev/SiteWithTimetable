@@ -20,6 +20,7 @@
         content="https://media.licdn.com/dms/image/v2/D5603AQEC83LqIlaY2g/profile-displayphoto-shrink_800_800/profile-displayphoto-shrink_800_800/0/1682736156495?e=1772668800&v=beta&t=mTGRSkSpTmN4iZ6dFhdc3C0wPC5ipaGxKken-l8QJVU">
     <meta property="og:url" content="https://jlesdev.github.io/SiteWithTimetable/">
     <meta name="twitter:card" content="summary_large_image">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 
 <body>
@@ -28,15 +29,15 @@
         <div class="container" id="header-container">
             <h2>Jonty Leslie - Rust Developer</h2>
             <nav>
-                <a href="#home" class="active nav-link" data-section="home">Home</a>
-                <a class="butt nav-link" href="#blog" data-section="blog">Blog</a>
+                <a href="index.html" class="active">Home</a>
                 <a class="butt" href="resume.html">Résumé</a>
+                <a class="butt" href="contact.html">Blog</a>
                 <a class="butt" href="about.html">About</a>
             </nav>
         </div>
     </header>
 
-    <section class="hero" id="home">
+    <section class="hero">
         <div class="container">
             <div>
                 <h1>Jonty Leslie</h1>
@@ -63,58 +64,7 @@
                 </form>
             </div>
         </div>
-    </section>
 
-    <!-- Blog Section -->
-    <section class="blog-section" id="blog" style="display: none;">
-        <div class="container">
-            <h2 class="blog-title">Hot Takes & Cold Truths</h2>
-            <p class="blog-subtitle">Controversial opinions on Melbourne's most mundane matters</p>
-
-            <!-- Blog Controls -->
-            <div class="blog-controls">
-                <button id="view-posts-btn" class="blog-tab active">View Posts</button>
-                <button id="write-post-btn" class="blog-tab">Write a Post</button>
-            </div>
-
-            <!-- Featured Articles -->
-            <div id="featured-articles" class="featured-articles">
-                <h3>Featured Articles</h3>
-                <div class="featured-grid" id="featured-grid">
-                    <!-- Featured posts will be inserted here -->
-                </div>
-            </div>
-
-            <!-- All Posts View -->
-            <div id="posts-view" class="posts-view">
-                <h3>All Posts</h3>
-                <div class="posts-grid" id="posts-grid">
-                    <!-- All posts will be inserted here -->
-                </div>
-            </div>
-
-            <!-- Write Post Form -->
-            <div id="write-post-view" class="write-post-view" style="display: none;">
-                <h3>Create a New Post</h3>
-                <form id="post-form" class="post-form">
-                    <input type="text" id="post-title" placeholder="Post Title*" required>
-                    <input type="text" id="post-author" placeholder="Your Name*" required>
-                    <textarea id="post-content" placeholder="Your hot take...*" rows="10" required></textarea>
-                    <div class="form-actions">
-                        <button type="submit" class="btn-submit">Publish Post</button>
-                        <button type="button" id="cancel-post" class="btn-cancel">Cancel</button>
-                    </div>
-                </form>
-            </div>
-
-            <!-- Single Post View -->
-            <div id="single-post-view" class="single-post-view" style="display: none;">
-                <button id="back-to-posts" class="back-button">← Back to Posts</button>
-                <article id="post-content-display" class="post-full">
-                    <!-- Full post content will be inserted here -->
-                </article>
-            </div>
-        </div>
     </section>
 
     <section class="tracker">
@@ -136,10 +86,12 @@
         <div id="train-board">Loading trains…</div>
     </section>
 
+
     <section class="services">
         <h2>My Projects</h2>
 
         <div class="service-grid">
+
             <div class="service" style="background-size: cover; background-color:#02343F;color:#F0EDCC;">
                 <h3>Jeather 2</h3>
                 <p>The world's first social media for weather.</p>
@@ -159,7 +111,9 @@
                 <h3>Open Source Contributions</h3>
                 <p>Mikoto, tiberius, and more.</p>
             </div>
+
         </div>
+
     </section>
 
     <footer>
@@ -167,292 +121,26 @@
         <p>Melbourne, Wurundjeri land | 0466 832 387</p>
     </footer>
 
-    <script>
-        // Blog Management
-        const SAMPLE_POSTS = [
-            {
-                id: 1,
-                title: "Why Melbourne Street Signs Fuel the Patriarchy",
-                author: "Jonty Leslie",
-                date: "2026-02-10",
-                content: `Let's talk about something nobody asked about but everyone needs to hear: Melbourne's street signs are secretly maintaining the patriarchy.
-
-I realized this the other day while walking down Bourke Street (named after a man, naturally) when it hit me - literally every major street in the CBD is named after some bloke. Swanston? A man. Collins? Man. Elizabeth? Okay fine, but she's a queen, which is basically honorary patriarchy.
-
-But here's where it gets insidious. The signs themselves are TALL. They tower over us. They literally look down on pedestrians. They're mounted at heights requiring ladders (phallic symbolism, anyone?) and they're always pointing, directing, commanding.
-
-"You must go THIS way," they seem to say. "Your destination is THAT direction." Classic patriarchal control structures disguised as helpful navigation.
-
-And don't even get me started on the green and white color scheme. Green for money and capitalism, white for... well, you can figure that one out.
-
-The solution? I propose we install street signs at ground level, written in a collaborative, non-hierarchical font (Comic Sans comes to mind), and rename everything after local native plants.
-
-Bourke Street? More like "Kangaroo Grass Lane."
-Flinders? Try "Wattle Way."
-
-Until then, I'll be walking with my eyes closed to avoid the oppressive gaze of the street sign patriarchy.`,
-                featured: true
-            },
-            {
-                id: 2,
-                title: "Trams Running Late Are Actually a Meditation Practice",
-                author: "Jonty Leslie",
-                date: "2026-02-09",
-                content: `Everyone complains about trams running late, but what if I told you that Yarra Trams is actually running a massive, city-wide mindfulness program?
-
-Think about it. When your tram is "2 minutes away" for 15 minutes straight, what are you doing? You're standing still. You're breathing. You're experiencing the present moment. You're literally practicing patience.
-
-The tram drivers aren't incompetent - they're mindfulness instructors in disguise. That announcement "Sorry for the delay, we're waiting for a tram ahead to clear" isn't an excuse, it's a koan. What is the sound of one tram waiting?
-
-I've achieved enlightenment three times this week on the 96 route alone. Once while standing in the rain for 20 minutes watching two trams pass by as "Not in Service." That's advanced level stuff.
-
-The real question is: are we ready to accept that Melbourne's public transport system is actually the most successful spiritual awakening program in the Southern Hemisphere?
-
-I say yes. Namaste, and may your tram be perpetually "approaching."`,
-                featured: true
-            },
-            {
-                id: 3,
-                title: "Laneway Coffee Culture is Just Gatekeeping Basic Beverages",
-                author: "Jonty Leslie",
-                date: "2026-02-08",
-                content: `Unpopular opinion: Melbourne's famous laneway coffee culture is just an elaborate scheme to make you feel bad about wanting a normal coffee.
-
-You walk into some hidden alley cafe (which you need a treasure map and local guide to find), and the barista with a perfectly waxed mustache asks you: "What can I get you?"
-
-"Just a regular coffee," you say.
-
-*Visible disgust crosses their face*
-
-"Do you mean a long black? A flat white? A piccolo? A magic? A cortado? Perhaps you'd prefer our single-origin Ethiopian Yirgacheffe with notes of blueberry and dark chocolate, pulled at 92 degrees for exactly 28 seconds?"
-
-IT'S JUST COFFEE. It's hot bean water. We've been drinking it for centuries without needing a PhD in beverage architecture.
-
-But no, in Melbourne you need to know the difference between a flat white and a latte (milk foam density, apparently), understand the Melbourne standard of coffee strength (anywhere else would call it motor oil), and be prepared to defend your milk choice like it's a thesis.
-
-Oat milk? Judgmental nod.
-Almond milk? Raised eyebrow.
-Regular milk? You've basically committed a hate crime.
-
-I propose we simplify the entire system: Small, Medium, Large. Hot or Cold. End of story.
-
-But I know what you're thinking: "This is what makes Melbourne special!"
-
-No, what makes Melbourne special is that we've convinced the world that making coffee unnecessarily complicated is culture rather than pretension.
-
-I'll take my triple-shot ristretto piccolo with oat milk at exactly 63 degrees, thanks.`,
-                featured: true
-            },
-            {
-                id: 4,
-                title: "The Real Reason Melburnians Wear Black: Laundry Conspiracy",
-                author: "Jonty Leslie",
-                date: "2026-02-07",
-                content: `Everyone thinks Melburnians wear black because we're fashionable and artsy. Wrong. It's because Big Laundry has infiltrated our water supply.
-
-Have you ever tried washing colored clothes in Melbourne water? They come out looking like a sad watercolor painting. That vibrant red shirt? Now it's "millennial pink." Your bright white t-shirt? "Vintage beige."
-
-But black? Black stays black. It's the only color that survives the Melbourne laundry experience.
-
-I conducted an experiment. I bought a rainbow colored shirt (yes, like actual rainbow) and washed it three times. It's now fifty shades of grey. Literally.
-
-The laundromat industry knows this. The detergent companies know this. They're all in on it. That's why every fashion boutique in Fitzroy only stocks black clothing. It's not a choice - it's survival.
-
-And before you say "just separate your whites and colors" - I DO. I have a degree in laundry management at this point. I use color-safe detergent. I wash in cold water. I sacrifice a small offering to the laundry gods every Sunday.
-
-Nothing works.
-
-So we all wear black. We tell ourselves it's because we're sophisticated urbanites with refined tastes. But deep down, we know the truth: we're all just trying to wear something that doesn't look like it was dunked in dishwater.
-
-The real Melbourne fashion statement isn't black on black on black - it's resignation on resignation on resignation.`,
-                featured: false
-            },
-            {
-                id: 5,
-                title: "AFL Grand Final Day Should Be Declared a Mental Health Crisis",
-                author: "Jonty Leslie",
-                date: "2026-02-06",
-                content: `Look, I'm going to say what we're all thinking but nobody wants to admit: AFL Grand Final Day is basically a city-wide mental health emergency that we've normalized.
-
-For 364 days a year, Melbourne is a rational city full of reasonable people who contribute to society. Then Grand Final Day hits and the entire population loses their minds.
-
-People paint their faces. Grown adults wear costumes. Strangers hug each other (or fight each other) based on the performance of people they've never met. The CBD becomes a war zone of meat pies and emotions.
-
-"But Jonty," you say, "it's just sport! It's tradition! It brings people together!"
-
-You know what else brings people together? Mass hysteria. Shared delusions. The Salem Witch Trials.
-
-I watched a man cry - ACTUALLY CRY - because a ball went through the wrong set of posts. This same man probably hasn't cried at a funeral in ten years, but a sporting result reduced him to tears in the middle of the MCG.
-
-The city gives us a public holiday for this. A HOLIDAY. We shut down the entire state so people can watch 22 people run around in short shorts fighting over a leather ball.
-
-If aliens visited Earth on Grand Final Day, they'd skip us entirely. "These humans are clearly in the middle of some ritual sacrifice. Let's try Earth again next week."
-
-And the worst part? I'm writing this from the MCG. In face paint. Wearing a scarf. About to scream at strangers.
-
-Go Dees.`,
-                featured: false
-            }
-        ];
-
-        // Initialize blog storage
-        let blogPosts = JSON.parse(localStorage.getItem('blogPosts')) || SAMPLE_POSTS;
-
-        // Save posts to localStorage
-        function savePosts() {
-            localStorage.setItem('blogPosts', JSON.stringify(blogPosts));
+    <script type="application/ld+json">
+        {
+          "@context": "https://schema.org",
+          "@type": "LocalBusiness",
+          "name": "Vortex Gutter Cleaning",
+          "telephone": "0466 832 387",
+          "address": {
+            "@type": "PostalAddress",
+            "streetAddress": "Kensington VIC",
+            "addressLocality": "Melbourne",
+            "addressRegion": "VIC",
+            "postalCode": "3000",
+            "addressCountry": "AU"
+          },
+          "url": "https://jlesdev.github.io/VortexGutters/",
+          "description": "Professional gutter, downpipe and roof cleaning services in Melbourne and surrounding suburbs."
         }
-
-        // Navigation
-        document.querySelectorAll('.nav-link').forEach(link => {
-            link.addEventListener('click', (e) => {
-                e.preventDefault();
-                const section = e.target.dataset.section;
-
-                // Update active nav
-                document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-                e.target.classList.add('active');
-
-                // Show/hide sections
-                if (section === 'home') {
-                    document.getElementById('home').style.display = 'block';
-                    document.getElementById('blog').style.display = 'none';
-                } else if (section === 'blog') {
-                    document.getElementById('home').style.display = 'none';
-                    document.getElementById('blog').style.display = 'block';
-                    showPostsView();
-                    renderFeaturedPosts();
-                    renderAllPosts();
-                }
-            });
-        });
-
-        // Blog tab switching
-        document.getElementById('view-posts-btn').addEventListener('click', showPostsView);
-        document.getElementById('write-post-btn').addEventListener('click', showWriteView);
-        document.getElementById('cancel-post').addEventListener('click', showPostsView);
-        document.getElementById('back-to-posts').addEventListener('click', showPostsView);
-
-        function showPostsView() {
-            document.getElementById('view-posts-btn').classList.add('active');
-            document.getElementById('write-post-btn').classList.remove('active');
-            document.getElementById('featured-articles').style.display = 'block';
-            document.getElementById('posts-view').style.display = 'block';
-            document.getElementById('write-post-view').style.display = 'none';
-            document.getElementById('single-post-view').style.display = 'none';
-        }
-
-        function showWriteView() {
-            document.getElementById('view-posts-btn').classList.remove('active');
-            document.getElementById('write-post-btn').classList.add('active');
-            document.getElementById('featured-articles').style.display = 'none';
-            document.getElementById('posts-view').style.display = 'none';
-            document.getElementById('write-post-view').style.display = 'block';
-            document.getElementById('single-post-view').style.display = 'none';
-        }
-
-        function showSinglePost(postId) {
-            const post = blogPosts.find(p => p.id === postId);
-            if (!post) return;
-
-            document.getElementById('featured-articles').style.display = 'none';
-            document.getElementById('posts-view').style.display = 'none';
-            document.getElementById('write-post-view').style.display = 'none';
-            document.getElementById('single-post-view').style.display = 'block';
-
-            const postDisplay = document.getElementById('post-content-display');
-            postDisplay.innerHTML = `
-                <h2>${post.title}</h2>
-                <div class="post-meta">
-                    <span class="post-author">By ${post.author}</span>
-                    <span class="post-date">${new Date(post.date).toLocaleDateString('en-AU', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
-                </div>
-                <div class="post-body">${post.content.replace(/\n\n/g, '</p><p>').replace(/^(.+)$/, '<p>$1</p>')}</div>
-            `;
-        }
-
-        // Render featured posts
-        function renderFeaturedPosts() {
-            const featuredGrid = document.getElementById('featured-grid');
-            const featured = blogPosts.filter(p => p.featured).slice(0, 3);
-
-            featuredGrid.innerHTML = featured.map(post => `
-                <div class="featured-card" data-post-id="${post.id}">
-                    <h4>${post.title}</h4>
-                    <p class="featured-excerpt">${post.content.substring(0, 150)}...</p>
-                    <div class="featured-meta">
-                        <span>${post.author}</span>
-                        <span>${new Date(post.date).toLocaleDateString('en-AU')}</span>
-                    </div>
-                </div>
-            `).join('');
-
-            // Add click handlers
-            document.querySelectorAll('.featured-card').forEach(card => {
-                card.addEventListener('click', () => {
-                    showSinglePost(parseInt(card.dataset.postId));
-                });
-            });
-        }
-
-        // Render all posts
-        function renderAllPosts() {
-            const postsGrid = document.getElementById('posts-grid');
-
-            postsGrid.innerHTML = blogPosts
-                .sort((a, b) => new Date(b.date) - new Date(a.date))
-                .map(post => `
-                    <div class="post-card" data-post-id="${post.id}">
-                        <h4>${post.title}</h4>
-                        <p class="post-excerpt">${post.content.substring(0, 120)}...</p>
-                        <div class="post-meta">
-                            <span>${post.author}</span>
-                            <span>${new Date(post.date).toLocaleDateString('en-AU')}</span>
-                        </div>
-                    </div>
-                `).join('');
-
-            // Add click handlers
-            document.querySelectorAll('.post-card').forEach(card => {
-                card.addEventListener('click', () => {
-                    showSinglePost(parseInt(card.dataset.postId));
-                });
-            });
-        }
-
-        // Handle post submission
-        document.getElementById('post-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-
-            const newPost = {
-                id: Date.now(),
-                title: document.getElementById('post-title').value,
-                author: document.getElementById('post-author').value,
-                date: new Date().toISOString().split('T')[0],
-                content: document.getElementById('post-content').value,
-                featured: false
-            };
-
-            blogPosts.unshift(newPost);
-            savePosts();
-
-            // Reset form
-            document.getElementById('post-form').reset();
-
-            // Show success and return to posts
-            alert('Post published successfully!');
-            showPostsView();
-            renderFeaturedPosts();
-            renderAllPosts();
-        });
-
-        // Initialize blog
-        renderFeaturedPosts();
-        renderAllPosts();
     </script>
 
     <script>
-        // Train tracker code (keeping original functionality)
         const FLINDERS_STOP_ID = 1071;
 
         let searchQuery = "";
@@ -643,6 +331,7 @@ Go Dees.`,
         setInterval(loadTrains, 30000);
 
         function renderLoop(board) {
+            // const board = document.getElementById("train-board");
             board.style.display = "grid";
             const grouped = {};
 
@@ -829,6 +518,7 @@ Go Dees.`,
             }
         }
 
+
         function renderBoard() {
             const board = document.getElementById("train-board");
             board.innerHTML = "";
@@ -846,6 +536,7 @@ Go Dees.`,
                 renderLines(board);
                 return;
             }
+
 
             if (sortMode === "all-stations") {
                 renderAllStationsGrid(board);
@@ -952,6 +643,7 @@ Go Dees.`,
                         direction_id = "To ";
                     }
 
+
                     row.innerHTML = `
                 <span class="train-line" style="color:${LINE_COLOURS[line_name] || "#000"}">
                     ${direction_id}${line_name}
@@ -980,6 +672,12 @@ Go Dees.`,
             }
         }
     </script>
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+
+
+
 </body>
 
 </html>
