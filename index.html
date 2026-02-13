@@ -168,7 +168,7 @@
             2: 'Belgrave',
             3: 'Craigieburn',
             4: 'Cranbourne',
-            5: 'Flemington Racecourse',
+            5: 'Flemington',
             6: 'Frankston',
             7: 'Glen Waverley',
             8: 'Hurstbridge',
@@ -188,7 +188,7 @@
             'Belgrave': "#A6E3FF",
             'Craigieburn': "#F5EC5D",
             'Cranbourne': "#73EBE3",
-            'Flemington Racecourse': "#F5EC5D",
+            'Flemington': "#F5EC5D",
             'Frankston': "#6BE35F",
             'Glen Waverley': "#A6E3FF",
             'Hurstbridge': "#EB8373",
@@ -265,7 +265,6 @@
         async function loadTrains() {
             const board = document.getElementById("train-board");
 
-            // Don't show loading if we're in all-stations mode (it updates in background)
             if (sortMode !== "all-stations") {
                 board.innerHTML = "Loading trains…";
             }
@@ -332,6 +331,8 @@
         setInterval(loadTrains, 30000);
 
         function renderLoop(board) {
+            // const board = document.getElementById("train-board");
+            board.style.display = "grid";
             const grouped = {};
 
             cachedResults.forEach(t => {
@@ -459,6 +460,8 @@
                 btn.style.color = LINE_COLOURS[lineName] || "#fff";
                 btn.textContent = lineName;
 
+                board.style.display = "inline";
+
                 btn.onclick = () => loadLineStations(routeId, lineName);
 
                 board.appendChild(btn);
@@ -468,6 +471,7 @@
         async function loadLineStations(routeId, lineName) {
             const board = document.getElementById("train-board");
             board.innerHTML = `Loading ${lineName} stations...`;
+            board.style.display = "inline";
 
             try {
                 const res = await fetch(
@@ -519,6 +523,7 @@
             const board = document.getElementById("train-board");
             board.innerHTML = "";
             board.classList.remove("loop", "all-stations-grid");
+            board.style.display = "inline";
 
             if (sortMode === "station") {
                 board.classList.add("loop");
@@ -527,6 +532,7 @@
             }
 
             if (sortMode === "lines") {
+                board.style.display = "inline";
                 renderLines(board);
                 return;
             }

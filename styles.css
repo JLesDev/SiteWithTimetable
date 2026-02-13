@@ -332,6 +332,14 @@ input::placeholder {
   max-width: 700px;
   margin: 30px auto;
   margin-top: 0;
+  display: flexbox;
+  gap: 12px;
+}
+
+#train-board-two {
+  max-width: 700px;
+  margin: 30px auto;
+  margin-top: 0;
   display: grid;
   gap: 12px;
 }
@@ -436,6 +444,8 @@ input::placeholder {
     cursor: pointer;
     text-align: left;
     transition: all 0.2s;
+    width: 40%;
+    margin: 0.2rem;
 }
 
 .station-button:hover {
